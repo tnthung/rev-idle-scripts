@@ -392,6 +392,7 @@ async function finishDTP40Loadout() {
 
   // get the total DTP, capped at 40
   const totalDTP = Math.min(await States.totalDTP(), 40);
+  if (totalDTP === 0) return;
 
   // prioritize applying the highest stage that is not yet finished
   for (const stage of DT_STAGES.reverse()) {
