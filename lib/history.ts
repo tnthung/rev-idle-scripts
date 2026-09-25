@@ -43,6 +43,7 @@ export class UnityHistory {
         "|     stats:",
         ...stats.map(stat =>
           `|         ${(ZodiacStatType[stat.type] + ":").padEnd(maxTypeLen)} ${stat.value.toString(4)}`),
+        "| Last 10 average zodiac rarity: " + UnityHistory.last10AverageZodiacRarity().toFixed(2),
         "+-------------------------------------------------"
       ].join("\n"));
   }
@@ -101,5 +102,11 @@ export class UnityHistory {
   static clearGlobal() {
     HISTORIES = [];
     rev.global.unityHistories = [];
+  }
+
+  static last10AverageZodiacRarity() {
+    const histories = this.getHistories().slice(-10);
+    if (!histories.length) return 0;
+    return histories.reduce((sum, { zodiacGot }) => sum + zodiacGot.rarity + zodiacGot.rarityPlus, 0) / histories.length;
   }
 }

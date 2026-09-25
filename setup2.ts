@@ -248,7 +248,7 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
   const disposable = Object.fromEntries(Object.entries(inventory).filter(([_, zodiac]) =>
     !zodiac.IsEmpty && !zodiac.locked && !reserved.has(zodiacKey(zodiac))));
   const histories = UnityHistory.getHistories().slice(-10);
-  const rarityCutOff = histories.reduce((sum, { zodiacGot }) => sum + zodiacGot.rarity + zodiacGot.rarityPlus, 0) / histories.length - 2;
+  const rarityCutOff = UnityHistory.last10AverageZodiacRarity() - 2;
   const obsolete = histories.length >= 8 ? Object.entries(disposable)
     .filter(([_, zodiac]) => zodiac.rarity + zodiac.rarityPlus < rarityCutOff)
     .sort(([_, a], [__, b]) => a.score.cmp(b.score))[0] : undefined;
