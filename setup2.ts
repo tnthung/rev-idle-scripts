@@ -2,6 +2,9 @@
 import type { Config, ZodiacSnapshot } from "./unity_loop.ts";
 
 import {
+  UnityHistory,
+} from "./lib/history.ts";
+import {
   States,
   Planet,
   UnityZodiac,
@@ -244,6 +247,12 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
 
   const disposable = Object.fromEntries(Object.entries(inventory).filter(([_, zodiac]) =>
     !zodiac.IsEmpty && !zodiac.locked && !reserved.has(zodiacKey(zodiac))));
+  const histories = UnityHistory.getHistories().slice(-10);
+  const rarityCutOff = histories.reduce((sum, { zodiacGot }) => sum + zodiacGot.rarity + zodiacGot.rarityPlus, 0) / histories.length - 2;
+  const obsolete = histories.length >= 8 ? Object.entries(disposable)
+    .filter(([_, zodiac]) => zodiac.rarity + zodiac.rarityPlus < rarityCutOff)
+    .sort(([_, a], [__, b]) => a.score.cmp(b.score))[0] : undefined;
+  const sellCandidate = obsolete ?? Object.entries(disposable).sort(([_, a], [__, b]) => a.score.cmp(b.score))[0];
 
   while (state.queue.length) {
     const target = state.queue[0];
@@ -259,13 +268,11 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
         return { type: "equip", planet: target.planet, slot: Number(slot) };
 
     for (const [planet, zodiac] of Object.entries(planets))
-      if (!zodiac.locked && zodiacKey(zodiac) === target.zodiac) {
-        const expendable = Object.entries(disposable).sort(([_, a], [__, b]) => a.score.cmp(b.score))[0];
+      if (!zodiac.locked && zodiacKey(zodiac) === target.zodiac)
         return {
           type: "takeOff", planet: planet as keyof typeof planets,
-          onFull: expendable ? { type: "sell", slot: Number(expendable[0]) } : undefined,
+          onFull: sellCandidate ? { type: "sell", slot: Number(sellCandidate[0]) } : undefined,
         };
-      }
 
     // Clear the state
     console.error(`Queued zodiac for ${target.planet} is unavailable; clearing the queue.`);
@@ -283,14 +290,15 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
   if (state.phase === "collect")
     return null;
 
-  if ((await States.zodiacInventorySlotCount() - Object.values(inventory).filter(z => !z.IsEmpty).length) < ZODIAC_SPARE_MIN) {
-    const expendable = Object.entries(disposable).sort(([_, a], [__, b]) => a.score.cmp(b.score))[0];
-    if (expendable) return { type: "sell", slot: Number(expendable[0]) };
-  }
+  if (obsolete)
+    return { type: "sell", slot: Number(obsolete[0]) };
+
+  if ((await States.zodiacInventorySlotCount() - Object.values(inventory).filter(z => !z.IsEmpty).length) < ZODIAC_SPARE_MIN)
+    if (sellCandidate) return { type: "sell", slot: Number(sellCandidate[0]) };
 
   for (const [slot, zodiac] of Object.entries(disposable))
     if (zodiac.quality.lt(ZODIAC_QUALITY_MIN))
-      return { type: "sacrifice", slot: Number(slot) };
+      return { type: "sell", slot: Number(slot) };
 
   for (const bucket of Object.values(collectMergeBuckets(disposable))) {
     if (bucket.length < 3) continue;
