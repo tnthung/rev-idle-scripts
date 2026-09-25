@@ -1,4 +1,4 @@
-// cspell:ignore eters Mult Mults sacri
+// cspell:ignore eters Mult Mults sacri showable
 import { BigNum } from "./utils.ts";
 
 
@@ -116,8 +116,8 @@ export class States {
   }
 
   static async sacrificeState() {
-    return Object.entries(await rev.state<Partial<Record<keyof typeof ZodiacStatType, { value: string | number }>>>("gameData.unity.sacriStats"))
-      .map(([type, {value}]) => new ZodiacStat({ type: type as keyof typeof ZodiacStatType, value }));
+    return Object.entries(await rev.state<Partial<Record<keyof typeof ZodiacStatType, SacriStatData>>>("gameData.unity.sacriStats"))
+      .map(([type, {value, score, showable}]) => new SacriStat({ type: type as keyof typeof ZodiacStatType, value, score, showable }));
   }
 
   static async attackLevel() {
@@ -284,6 +284,30 @@ export class ZodiacStat {
     this.type = ZodiacStatType[type];
     if (type == null) console.error(`zodiac stat type ${type} is missing from the enum`);
     this.value = new BigNum(value);
+  }
+}
+
+
+interface SacriStatData {
+  type: keyof typeof ZodiacStatType;
+  value: string | number;
+  score: string | number;
+  showable: boolean;
+}
+
+
+export class SacriStat {
+  type: ZodiacStatType;
+  value: BigNum;
+  score: BigNum;
+  showable: boolean;
+
+  constructor({ type, value, score, showable }: SacriStatData) {
+    this.type = ZodiacStatType[type];
+    if (type == null) console.error(`sacri stat type ${type} is missing from the enum`);
+    this.value = new BigNum(value);
+    this.score = new BigNum(score);
+    this.showable = showable;
   }
 }
 
