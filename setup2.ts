@@ -25,7 +25,7 @@ const ATTACK_CHECK_INTERVAL_MS = 500;
 const ZODIAC_QUALITY_MIN       = new BigNum(8000);
 const ATTACK_FAST_ETA_CAP_S    = new BigNum(30);
 const ATTACK_SLOW_ETA_CAP_S    = new BigNum(180);
-const RELIC_COST_CAP           = new BigNum(2);
+const RELIC_SAVE_CAP           = new BigNum(2);
 
 
 type Loadout = { planet: keyof ZodiacSnapshot["planets"]; zodiac: string }[];
@@ -387,11 +387,7 @@ function zodiacKey(zodiac: UnityZodiac): string {
 const RELIC_PRIORITY = [13, 19, 20, 8, 15, 16, 17, 2, 12, 18, 6, 7, 0, 14, 11, 10, 9, 5, 4, 3, 1];
 
 async function relicsToBuy(): ReturnType<Exclude<Config["relicsToBuy"], undefined>> {
-  const [gold, next, relics] = await Promise.all([
-    States.currentGold(),
-    States.nextGold(),
-    States.attackRelics(),
-  ]);
+  const [gold, relics] = await Promise.all([States.currentGold(), States.attackRelics()]);
 
   const priority = [...RELIC_PRIORITY];
   if (relics[20]?.amount.gte(new BigNum(100))) {
@@ -399,10 +395,11 @@ async function relicsToBuy(): ReturnType<Exclude<Config["relicsToBuy"], undefine
     priority[RELIC_PRIORITY.indexOf(16)] = 20;
   }
 
+  const lastGold = UnityHistory.getHistories().slice(-1).at(0)?.goldGained;
   return priority
     .filter(rid => relics[rid]?.unlocked)
     .map(rid => [rid, relics.at(rid)?.totalCost] as const)
-    .filter(([_, total]) => total?.div(next).lte(RELIC_COST_CAP) || total?.lte(gold))
+    .filter(([_, total]) => (lastGold && total?.div(lastGold).lte(RELIC_SAVE_CAP)) || total?.lte(gold))
     .map(([rid, _]) => rid);
 }
 
