@@ -28,6 +28,8 @@ interface Rev {
   press(key: string): void;
   /** Sets client-area dimensions, both positive finite 32-bit integers. */
   resize(width: number, height: number): void;
+  /** Acquires cooperative screen-input ownership for the session. */
+  screenOwnership(): Promise<ScreenOwnership>;
 
   read_clipboard(): string;
   write_clipboard(text: string): void;
@@ -46,6 +48,11 @@ interface Rev {
   stop(): void;
   /** Process-wide JSON storage. Missing keys read as undefined; assigning undefined stores null. */
   global: Record<string, RevJsonValue | undefined>;
+}
+
+interface ScreenOwnership extends Disposable {
+  /** Releases this ownership token; repeated calls are harmless. */
+  release(): void;
 }
 
 /** Available inside the entry function and lifecycle hooks, not during module initialization. */
