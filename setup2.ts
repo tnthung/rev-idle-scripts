@@ -384,7 +384,11 @@ function zodiacKey(zodiac: UnityZodiac): string {
 
 
 // Zero-based indexes for the thread's relic numbers; keep the existing saving budget.
-const RELIC_PRIORITY = [13, 19, 20, 8, 15, 16, 17, 2, 12, 18, 6, 7, 0, 14, 11, 10, 9, 5, 4, 3, 1];
+const RELIC_PRIORITY = [
+  13, 19, 20, 23, 8,  15, 16, 17, 29, 22,
+  21, 28, 27, 2,  12, 18, 26, 25, 24, 6,
+  7,  0,  14, 11, 10, 9,  5,  4,  3,  1,
+];
 
 async function relicsToBuy(): ReturnType<Exclude<Config["relicsToBuy"], undefined>> {
   const [gold, relics] = await Promise.all([States.currentGold(), States.attackRelics()]);
