@@ -1,4 +1,5 @@
 import { Action } from "./lib/action.ts";
+import { UnityHistory } from "./lib/history.ts";
 import {
   DilationTree,
   DT_EXTRAS,
@@ -8,11 +9,6 @@ import {
   States,
   Planet,
   UnityZodiac,
-  ZodiacStatType,
-  ZodiacSign,
-  ZodiacElement,
-  ZodiacSeason,
-  ZodiacRarity,
 } from "./lib/states.ts";
 import {
   pollFor,
@@ -125,23 +121,11 @@ export default async function main() {
     }
 
     const direction = await config.uniteWith();
-
-    let message = "";
-    const z = (await States.nextUnityZodiacs())[UnityDirection[direction]];
-    message += "+-------------------------------------------------\n";
-    message += `| Last unity elapsed: ${elapsed/1000}s\n`;
-    message += `| United with attack: ${(await States.attackLevel()).level}\n`;
-    message += `| United with gold:   ${(await States.nextGold()).toString(4)}\n`;
-    message += `| United with zodiac: ${ZodiacSign[z.sign]} / ${ZodiacElement[z.Element]} / ${ZodiacSeason[z.Season]}\n`;
-    message += `|     level:   ${Math.round(z.level.toNumber())}\n`;
-    message += `|     rarity:  ${ZodiacRarity[z.rarity]}${z.rarityPlus ? `+${z.rarityPlus}` : ""}\n`;
-    message += `|     score:   ${z.score.toString(4)}\n`;
-    message += `|     quality: ${z.quality.toString(4)}\n`;
-    message += "|     stats:\n";
-    const typeLen = Math.max(...z.stats.map(stat => ZodiacStatType[stat.type].length)) + 1;
-    for (const stat of z.stats)
-      message += `|         ${(ZodiacStatType[stat.type] + ":").padEnd(typeLen)} ${stat.value.toString(4)}\n`;
-    message += "+-------------------------------------------------\n";
+    const history = new UnityHistory(
+      elapsed,
+      await States.nextGold(),
+      (await States.attackLevel()).level,
+      (await States.nextUnityZodiacs())[UnityDirection[direction]]);
 
     try { await Action.main.unit[direction](); }
     catch (e) {
@@ -149,7 +133,8 @@ export default async function main() {
       return;
     }
 
-    console.log(message);
+    history.print();
+    history.pushGlobal();
     rev.global.unityStart = Date.now();
   }
 
