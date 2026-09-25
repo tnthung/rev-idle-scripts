@@ -225,6 +225,7 @@ async function uniteWith(): ReturnType<Exclude<Config["uniteWith"], undefined>> 
 }
 
 
+let soZodiacSwapping: ScreenOwnership | undefined;
 async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnType<Exclude<Config["nextZodiacAction"], undefined>> {
   const unities = (await States.unities()).toString();
   let state = rev.global.setup2;
@@ -253,6 +254,11 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
     .filter(([_, zodiac]) => zodiac.rarity + zodiac.rarityPlus < rarityCutOff)
     .sort(([_, a], [__, b]) => a.score.cmp(b.score))[0] : undefined;
   const sellCandidate = obsolete ?? Object.entries(disposable).sort(([_, a], [__, b]) => a.score.cmp(b.score))[0];
+
+  if (state.queue.length)
+    soZodiacSwapping ??= await rev.screenOwnership();
+  else
+    soZodiacSwapping = void soZodiacSwapping?.release();
 
   while (state.queue.length) {
     const target = state.queue[0];

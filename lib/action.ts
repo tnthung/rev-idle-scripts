@@ -495,15 +495,20 @@ export class Action extends Function {
     })
     .extend({
       async upgradeRings() {
+        let so: ScreenOwnership | undefined;
+
         i: for (let i=5; i>0; i--) while (true) {
           if (!(await States.attackRevolutionCanBuy(i-1)))
             continue i;
 
+          so ??= await rev.screenOwnership();
           console.log(`Upgrading attack ring ${i}`)
           await Action.attack[`buy${i as 1|2|3|4|5}`]();
           await Action.attack[`ascend${i as 1|2|3|4|5}`]();
           await rev.sleep(500);
         }
+
+        so?.release();
       },
       async buyRelic(n: number) {
         if (n < 0 || n > 70) throw new Error("Invalid relic button index");
@@ -512,6 +517,8 @@ export class Action extends Function {
           .catch(_ => {});
       },
       async buyRelics(n: number[]) {
+        let so: ScreenOwnership | undefined;
+
         i: for (const index of n) {
           let first = true;
 
@@ -528,12 +535,15 @@ export class Action extends Function {
               continue i;
             }
 
+            so ??= await rev.screenOwnership();
             console.log(`Buying relic ${index+1}`)
             await Action.unity.relic();
             await Action.attack.buyRelic(index);
             first = false;
           }
         }
+
+        so?.release();
       },
     });
 
