@@ -529,6 +529,7 @@ export class Action extends Function {
             }
 
             console.log(`Buying relic ${index+1}`)
+            await Action.unity.relic();
             await Action.attack.buyRelic(index);
             first = false;
           }
