@@ -536,8 +536,6 @@ export class Action extends Function {
             for (const [slot, mineral] of Object.entries(await States.commonMinerals()))
               canMerge ||= (buckets[mineral.level.toInt()] ??= []).push(Number(slot)) >= 2;
 
-            buckets.dbg("Buckets before merging");
-
             if (!canMerge)
               return false;
 
