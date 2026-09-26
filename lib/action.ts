@@ -517,8 +517,6 @@ export class Action extends Function {
           .catch(_ => {});
       },
       async buyRelics(n: number[]) {
-        let so: ScreenOwnership | undefined;
-
         i: for (const index of n) {
           let first = true;
 
@@ -535,15 +533,12 @@ export class Action extends Function {
               continue i;
             }
 
-            so ??= await rev.screenOwnership();
             console.log(`Buying relic ${index+1}`)
             await Action.unity.relic();
             await Action.attack.buyRelic(index);
             first = false;
           }
         }
-
-        so?.release();
       },
     });
 
