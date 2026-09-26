@@ -175,6 +175,22 @@ export default async function main() {
 
 
 async function zodiacMaintenance() {
+  let so: ScreenOwnership | undefined;
+
+  while (true) {
+    const action = await config.nextZodiacAction?.({
+      inventory: await States.unityZodiacInventory(),
+      planets:   await States.planetZodiacInventory(),
+    });
+
+    if (!action) break;
+    so ??= await rev.screenOwnership();
+    await execute(action);
+  }
+
+  so?.release();
+
+
   async function execute(action: ZodiacAction) {
     switch (action.type) {
       case "equip":
@@ -217,16 +233,6 @@ async function zodiacMaintenance() {
       default:
         throw new Error(`Unknown action type: ${(action as any).type}`);
     }
-  }
-
-  while (true) {
-    const action = await config.nextZodiacAction?.({
-      inventory: await States.unityZodiacInventory(),
-      planets:   await States.planetZodiacInventory(),
-    });
-
-    if (!action) break;
-    await execute(action);
   }
 }
 
