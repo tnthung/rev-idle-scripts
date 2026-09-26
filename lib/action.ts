@@ -514,13 +514,14 @@ export class Action extends Function {
         })
         .extend({
           async trySpawn() {
-            const [lvl, cur, min] = await Promise.all([
+            const [gold, lvl, cur, min] = await Promise.all([
+              States.currentGold(),
               States.currentMineralLevel(),
               States.currentMineralCost(),
               States.minMineralCost(),
             ]);
 
-            if (cur.eq(min)) {
+            if (cur.eq(min) && gold.gte(cur)) {
               using _so = await rev.screenOwnership();
               console.log(`Spawning mineral level ${lvl.toInt()} at ${new Date().toISOString()}`);
               await Action.unity.minerals.spawn();
