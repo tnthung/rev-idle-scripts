@@ -216,6 +216,11 @@ export class Action extends Function {
     return this as this & M;
   }
 
+  ensureCanSkip() {
+    if (!this.canSkip)
+      this.execute(true);
+  }
+
 
   static dismiss = new Action()
     .invokeSilent("scene:-12/VIEWMANAGER[0]/safe_area[0]/NOTIFY[3]/notify_default%28Clone%29[0]/btn_close[1]")
@@ -512,6 +517,7 @@ export class Action extends Function {
       },
       async buyRelic(n: number) {
         if (n < 0 || n > 70) throw new Error("Invalid relic button index");
+        Action.unity.relic.ensureCanSkip();
         await rev
           .invoke(`scene:-284/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/relics[2]/content[0]/scroll_view[1]/viewport[1]/content[0]/attack_relic_item_${n}[${n}]/content[0]/ctn_bottom[2]/ctn_info[0]/btn_buy[1]`)
           .catch(_ => {});
