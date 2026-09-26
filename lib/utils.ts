@@ -246,6 +246,22 @@ export class BigNum {
   toNumber(): number {
     return this.man * Math.pow(10, Number(this.exp));
   }
+
+  toInt(): number {
+    return Math.floor(this.toNumber());
+  }
+
+  toBigInt(): bigint {
+    if (this.exp < 0n) return this.isNeg ? -1n : 0n;
+
+    const [d, f = ""] = this.man.toString().split(".");
+    const man = BigInt(d + f);
+    const exp = this.exp - BigInt(f.length);
+    if (exp >= 0n) return man * 10n ** exp;
+
+    const divisor = 10n ** -exp;
+    return man / divisor - (man < 0n && man % divisor !== 0n ? 1n : 0n);
+  }
 }
 
 
