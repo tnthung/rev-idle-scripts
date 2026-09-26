@@ -155,8 +155,7 @@ export class Action extends Function {
   }
 
   loopDetached() {
-    (async () => { while (true) await this.execute(); })()
-      .catch(console.error);
+    (async () => { while (true) await this.execute().catch(console.error); })();
   }
 
   press(key: string, delayMs: number = 10) {
