@@ -18,10 +18,10 @@ export function isStringNumeric(value: string): boolean {
 
 declare global {
   interface ObjectConstructor {
-    map(
-      obj: Record<string, any>,
-      fn: (key: string, value: any) => [string, any] | null,
-    ): Record<string, any>;
+    map<T, U>(
+      obj: Record<string, T>,
+      fn: (key: string, value: T) => [string, U] | null,
+    ): Record<string, U>;
   }
 
   interface Object {
