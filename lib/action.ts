@@ -35,6 +35,10 @@ type ActionStep = {
   path: string,
   delayMs: number,
 } | {
+  type: "scrollIntoView",
+  path: string,
+  delayMs: number,
+} | {
   type: "invoke:silent",
   path: string,
   delayMs: number,
@@ -128,6 +132,9 @@ export class Action extends Function {
         case "invoke":
           await rev.invoke(step.path);
           break;
+        case "scrollIntoView":
+          await rev.scrollIntoView(step.path);
+          break;
         case "invoke:silent":
           await rev.invoke(step.path).catch(_ => {});
           break;
@@ -179,6 +186,11 @@ export class Action extends Function {
 
   invoke(path: string, delayMs: number = 10) {
     this.steps.push({ type: "invoke", path, delayMs });
+    return this;
+  }
+
+  scrollIntoView(path: string, delayMs: number = 10) {
+    this.steps.push({ type: "scrollIntoView", path, delayMs });
     return this;
   }
 
