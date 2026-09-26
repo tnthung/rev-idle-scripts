@@ -491,7 +491,41 @@ export class Action extends Function {
         .subLevelIsolated({
           reset: new Action().invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/trials[1]/content[0]/ctn_right[1]/ctn_trial_topbar[1]/btn_clear[3]"),
         }),
-      relic: new Action().invoke("scene:-454/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/tab_menu[1]/tab_relics[2]"),
+      relic: new Action()
+        .invoke("scene:-454/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/tab_menu[1]/tab_relics[2]")
+        .extend({
+          async buy(n: number) {
+            if (n < 0 || n > 70) throw new Error("Invalid relic button index");
+            const button = `scene:-284/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/relics[2]/content[0]/scroll_view[1]/viewport[1]/content[0]/attack_relic_item_${n}[${n}]/content[0]/ctn_bottom[2]/ctn_info[0]/btn_buy[1]`;
+            await Action.unity.relic();
+            await rev.scrollIntoView(button);
+            await rev.sleep(100);
+            await rev.invoke(button);
+          },
+        }),
+      minerals: new Action()
+        .invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/tab_menu[1]/tab_minerals[3]")
+        .subLevel({
+          spawn: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_spawn[1]/ctn_spawn_actions[1]/btn_spawn[3]"),
+        })
+        .extend({
+          async trySpawn() {
+            const [lvl, cur, min] = await Promise.all([
+              States.currentMineralLevel(),
+              States.currentMineralCost(),
+              States.minMineralCost(),
+            ]);
+
+            if (cur.eq(min)) {
+              using _so = await rev.screenOwnership();
+              console.log(`Spawning mineral level ${lvl.toInt()} at ${new Date().toISOString()}`);
+              await Action.unity.minerals.spawn();
+              return true;
+            }
+
+            return false;
+          },
+        }),
     });
 
 
@@ -526,14 +560,9 @@ export class Action extends Function {
 
         so?.release();
       },
-      async buyRelic(n: number) {
-        if (n < 0 || n > 70) throw new Error("Invalid relic button index");
-        Action.unity.relic.ensureCanSkip();
-        await rev
-          .invoke(`scene:-284/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/relics[2]/content[0]/scroll_view[1]/viewport[1]/content[0]/attack_relic_item_${n}[${n}]/content[0]/ctn_bottom[2]/ctn_info[0]/btn_buy[1]`)
-          .catch(_ => {});
-      },
       async buyRelics(n: number[]) {
+        let so: ScreenOwnership | undefined;
+
         i: for (const index of n) {
           let first = true;
 
@@ -550,12 +579,14 @@ export class Action extends Function {
               continue i;
             }
 
+            so ??= await rev.screenOwnership();
             console.log(`Buying relic ${index+1}`)
-            await Action.unity.relic();
-            await Action.attack.buyRelic(index);
+            await Action.unity.relic.buy(index);
             first = false;
           }
         }
+
+        so?.release();
       },
     });
 

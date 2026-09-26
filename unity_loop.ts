@@ -60,6 +60,14 @@ export async function afterLoad() {
       await rev.sleep(1000);
     }
   })().catch(e => console.error("Error in attack maintenance loop:", e));
+
+  (async () => {
+    while (true) {
+      try { await Action.unity.minerals.trySpawn(); }
+      catch (e) { console.error(e); }
+      await rev.sleep(1000);
+    }
+  })().catch(e => console.error("Error in mineral spawn loop:", e));
 }
 
 

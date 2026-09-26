@@ -142,6 +142,18 @@ export class States {
   static async maxAttackLevelReached() {
     return Number(await rev.state<string | number>("gameData.attacks.maxLevelReached"));
   }
+
+  static async currentMineralLevel() {
+    return new BigNum(await rev.state<string | number>("gameData.minerals.curMineralLevel"));
+  }
+
+  static async currentMineralCost() {
+    return new BigNum(await rev.state<string | number>("gameData.minerals.curMineralCost"));
+  }
+
+  static async minMineralCost() {
+    return new BigNum(await rev.state<string | number>("gameData.minerals.minMineralCost"));
+  }
 }
 
 
