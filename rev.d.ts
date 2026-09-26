@@ -12,6 +12,8 @@ interface Rev {
 
   /** Invokes a button or checkbox at an exact Unity hierarchy path. */
   invoke(path: string): Promise<void>;
+  /** Instantly scrolls active containing Unity scroll views to reveal a UI element, including inactive buffered children. */
+  scrollIntoView(path: string): Promise<void>;
   /** Dispatches drag/drop between exact Unity slot paths. */
   transfer(source: string, destination: string): Promise<void>;
   /** Reads the item data at an exact Unity slot path; returns null when empty. */
