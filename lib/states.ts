@@ -155,6 +155,10 @@ export class States {
     return new BigNum(await rev.state<string | number>("gameData.minerals.minMineralCost"));
   }
 
+  static async maxMineralLevel() {
+    return new BigNum(await rev.state<string | number>("gameData.minerals.maxMineralLevel"));
+  }
+
   static async commonMinerals() {
     return Object.map(await rev.state<Record<string | number, CommonMineralData>>("gameData.minerals.commonMinerals"),
       (slot, data) => [slot, new CommonMineral(data)] as const);

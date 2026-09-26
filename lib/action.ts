@@ -526,6 +526,12 @@ export class Action extends Function {
           spawn: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_spawn[1]/ctn_spawn_actions[1]/btn_spawn[3]"),
         })
         .extend({
+          async setMineralLevel(level: string) {
+            const MINERAL_LEVEL_INPUT = "scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_spawn[1]/ctn_spawn_actions[1]/ctn_spawn_level[1]/input_spawn_level[1]";
+            using _so = await rev.screenOwnership();
+            await Action.unity.minerals();
+            await rev.input(MINERAL_LEVEL_INPUT, level);
+          },
           async trySpawn() {
             const [gold, lvl, cur, min] = await Promise.all([
               States.currentGold(),
@@ -534,14 +540,13 @@ export class Action extends Function {
               States.minMineralCost(),
             ]);
 
-            if (cur.eq(min) && gold.gte(cur)) {
-              using _so = await rev.screenOwnership();
-              console.log(`Spawning mineral level ${lvl.toInt()} at ${new Date().toISOString()}`);
-              await Action.unity.minerals.spawn();
-              return true;
-            }
+            if (!(cur.eq(min) && gold.gte(cur)))
+              return false;
 
-            return false;
+            using _so = await rev.screenOwnership();
+            console.log(`Spawning mineral level ${lvl.toInt()} at ${new Date().toISOString()}`);
+            await Action.unity.minerals.spawn();
+            return true;
           },
           async tryMerge() {
             let canMerge = false;

@@ -11,6 +11,7 @@ import {
   UnityZodiac,
 } from "./lib/states.ts";
 import {
+  BigNum,
   pollFor,
   range,
   UnityDirection,
@@ -64,6 +65,16 @@ export async function afterLoad() {
   (async () => {
     while (true) {
       try {
+        const currentLvl = await States.currentMineralLevel();
+        const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
+        updateLvl: if (lastGainedGold) {
+          const minLevel = BigNum.min(...Object.values(await States.commonMinerals()).map(m => m.level));
+          const level = new BigNum(lastGainedGold.exponent - 107n).min(minLevel);
+          if (currentLvl.eq(level)) break updateLvl;
+          await Action.unity.minerals.setMineralLevel(level.toBigInt().toString());
+          await rev.sleep(100);
+        }
+
         await Action.unity.minerals.trySpawn();
         await Action.unity.minerals.tryMerge();
       } catch (e) { console.error(e); }

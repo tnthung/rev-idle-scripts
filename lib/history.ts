@@ -48,9 +48,9 @@ export class UnityHistory {
       ].join("\n"));
   }
 
-  static getHistories() {
+  static getHistories(n?: number) {
     this.ensureHistories();
-    return HISTORIES!;
+    return HISTORIES!.slice(- (n ?? HISTORIES!.length));
   }
 
   private static ensureHistories() {
