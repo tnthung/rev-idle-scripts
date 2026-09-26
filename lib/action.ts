@@ -48,6 +48,11 @@ type ActionStep = {
   destination: string,
   delayMs: number,
 } | {
+  type: "input",
+  path: string,
+  value: string,
+  delayMs: number,
+} | {
   type: "sleep",
   ms: number,
 };
@@ -145,6 +150,9 @@ export class Action extends Function {
         case "transfer":
           await rev.transfer(step.source, step.destination);
           break;
+        case "input":
+          await rev.input(step.path, step.value);
+          break;
         case "sleep":
           await rev.sleep(step.ms);
           continue;
@@ -204,6 +212,11 @@ export class Action extends Function {
 
   transfer(source: string, destination: string, delayMs: number = 10) {
     this.steps.push({ type: "transfer", source, destination, delayMs });
+    return this;
+  }
+
+  input(path: string, value: string, delayMs: number = 10) {
+    this.steps.push({ type: "input", path, value, delayMs });
     return this;
   }
 
