@@ -73,6 +73,10 @@ export function ZODIAC_INV_SLOT_SHOP(n: number): string {
   return `scene:-148/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/astrology[0]/content[0]/views[0]/planet_shop[1]/ctn_inventory[2]/scrollview[1]/viewport[0]/content[0]/item_slot_zodiac_${n+1}[${n}]`;
 }
 
+export function MINERAL_SLOT(n: number): string {
+  return `scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_left[1]/ctn_minerals[1]/views[0]/scrollview_common[0]/viewport[0]/ctn_grid[0]/item_slot_mineral_${n}[${n+1}]`;
+}
+
 
 export class Action extends Function {
   private parentAct?: Action;
@@ -524,6 +528,33 @@ export class Action extends Function {
             }
 
             return false;
+          },
+          async tryMerge() {
+            let canMerge = false;
+
+            const buckets = {} as Record<string, number[]>;
+            for (const [slot, mineral] of Object.entries(await States.commonMinerals()))
+              canMerge ||= (buckets[mineral.level.toInt()] ??= []).push(Number(slot)) >= 2;
+
+            buckets.dbg("Buckets before merging");
+
+            if (!canMerge)
+              return false;
+
+            using _so = await rev.screenOwnership();
+            await Action.unity.minerals();
+
+            while (canMerge) {
+              for (const [level, slots] of Object.entries(buckets))
+                if (slots.length >= 2) {
+                  await rev.transfer(MINERAL_SLOT(slots[0]), MINERAL_SLOT(slots[1]))
+                  await rev.sleep(100);
+                  (buckets[Number(level)+1] ??= []).push(slots[1]);
+                  buckets[Number(level)] = slots.slice(2);
+                }
+
+              canMerge = Object.values(buckets).some(slots => slots.length >= 2);
+            }
           },
         }),
     });

@@ -154,6 +154,11 @@ export class States {
   static async minMineralCost() {
     return new BigNum(await rev.state<string | number>("gameData.minerals.minMineralCost"));
   }
+
+  static async commonMinerals() {
+    return Object.map(await rev.state<Record<string | number, CommonMineralData>>("gameData.minerals.commonMinerals"),
+      (slot, data) => [slot, new CommonMineral(data)] as const);
+  }
 }
 
 
@@ -410,6 +415,42 @@ export class AttackRelic {
     this.sacriLevel = new BigNum(sacriLevel);
     this.totalCost = new BigNum(totalCost);
     this.unlocked = unlocked;
+  }
+}
+
+
+interface CommonMineralData {
+  Id: number;
+  income: string | number;
+  Name: string;
+  KeyDesc: string;
+  KeyName: string;
+  level: string | number;
+}
+
+
+export class CommonMineral {
+  Id: number;
+  income: BigNum;
+  Name: string;
+  KeyDesc: string;
+  KeyName: string;
+  level: BigNum;
+
+  constructor({
+    Id,
+    income,
+    Name,
+    KeyDesc,
+    KeyName,
+    level,
+  }: CommonMineralData) {
+    this.Id = Id;
+    this.income = new BigNum(income);
+    this.Name = Name;
+    this.KeyDesc = KeyDesc;
+    this.KeyName = KeyName;
+    this.level = new BigNum(level);
   }
 }
 

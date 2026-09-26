@@ -63,8 +63,10 @@ export async function afterLoad() {
 
   (async () => {
     while (true) {
-      try { await Action.unity.minerals.trySpawn(); }
-      catch (e) { console.error(e); }
+      try {
+        await Action.unity.minerals.trySpawn();
+        await Action.unity.minerals.tryMerge();
+      } catch (e) { console.error(e); }
       await rev.sleep(1000);
     }
   })().catch(e => console.error("Error in mineral spawn loop:", e));
