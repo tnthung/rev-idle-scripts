@@ -66,13 +66,14 @@ export async function afterLoad() {
   (async () => {
     while (true) {
       try {
+        for (const type of ["FallSpeed", "MaxLevel", "GoldGain", "QualityBonus", "LuckBonus"] satisfies (keyof typeof MineralUpgradeType)[])
+          if ((await States.mineralUpgrade(MineralUpgradeType[type])).canBuy) {
+            await Action.unity.minerals[`upgrade${type}`]().catch(() => {});
+            await rev.sleep(100);
+          }
+
         const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
         updateLvl: if (lastGainedGold) {
-          if ((await States.mineralUpgrade(MineralUpgradeType.FallSpeed)).canBuy)
-            await Action.unity.minerals.upgradeFallSpeed().catch(() => {});
-          if ((await States.mineralUpgrade(MineralUpgradeType.MaxLevel)).canBuy)
-            await Action.unity.minerals.upgradeMaxLevel().catch(() => {});
-
           const curLevel = await States.currentMineralLevel();
           const maxLevel = await States.maxMineralLevel();
           const minOwnedLevel = BigNum.min(...Object.values(await States.commonMinerals()).map(m => m.level));
