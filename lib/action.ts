@@ -1,4 +1,4 @@
-// cspell:ignore scrollview eternate VIEWMANAGER topbar enchancing buyables
+// cspell:ignore scrollview eternate VIEWMANAGER topbar enchancing buyables Mult
 import { States, Planet } from "./states.ts";
 
 
@@ -33,6 +33,7 @@ type ActionStep = {
 } | {
   type: "invoke",
   path: string,
+  scrollIntoView: boolean;
   delayMs: number,
 } | {
   type: "scrollIntoView",
@@ -41,6 +42,7 @@ type ActionStep = {
 } | {
   type: "invoke:silent",
   path: string,
+  scrollIntoView: boolean;
   delayMs: number,
 } | {
   type: "transfer",
@@ -139,6 +141,8 @@ export class Action extends Function {
           rev.drag(step.startX, step.startY, step.endX, step.endY);
           break;
         case "invoke":
+          if (step.scrollIntoView)
+            await rev.scrollIntoView(step.path);
           await rev.invoke(step.path);
           break;
         case "scrollIntoView":
@@ -195,8 +199,8 @@ export class Action extends Function {
     return this;
   }
 
-  invoke(path: string, delayMs: number = 10) {
-    this.steps.push({ type: "invoke", path, delayMs });
+  invoke(path: string, scrollIntoView: boolean = false, delayMs: number = 10) {
+    this.steps.push({ type: "invoke", path, delayMs, scrollIntoView });
     return this;
   }
 
@@ -205,8 +209,8 @@ export class Action extends Function {
     return this;
   }
 
-  invokeSilent(path: string, delayMs: number = 10) {
-    this.steps.push({ type: "invoke:silent", path, delayMs });
+  invokeSilent(path: string, scrollIntoView: boolean = false, delayMs: number = 10) {
+    this.steps.push({ type: "invoke:silent", path, delayMs, scrollIntoView });
     return this;
   }
 
@@ -261,7 +265,7 @@ export class Action extends Function {
       claimIP: new Action().invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/main[0]/content[0]/panel[0]/ctn_bottom[16]/btn_infinite_reset[4]"),
       claimEP: new Action().invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/main[0]/content[0]/panel[0]/ctn_bottom[16]/btn_eternate_reset[3]"),
       unit: new Action()
-        .invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/main[0]/content[0]/panel[0]/ctn_bottom[16]/btn_unite_reset[2]", 1500)
+        .invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/main[0]/content[0]/panel[0]/ctn_bottom[16]/btn_unite_reset[2]", false, 1500)
         .subLevel({
           left: new Action()
             .invoke("scene:-148/CANVAS[0]/safe_area[0]/front_views[3]/layer_1[0]/zodiac_choice[11]/content[0]/ctn_zodiac[5]/ctn_root[0]/item_zodiac_choice_item_left[3]/btn_astro[0]")
@@ -524,6 +528,21 @@ export class Action extends Function {
         .invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/tab_menu[1]/tab_minerals[3]")
         .subLevel({
           spawn: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_spawn[1]/ctn_spawn_actions[1]/btn_spawn[3]"),
+          upgradeMaxLevel: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_0[0]/content[0]/ctn_upgrade[1]", true),
+          upgradeGridHeight: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_1[1]/content[0]/ctn_upgrade[1]", true),
+          upgradeGridWidth: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_2[2]/content[0]/ctn_upgrade[1]", true),
+          upgradeFallSpeed: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_3[3]/content[0]/ctn_upgrade[1]", true),
+          upgradeLuckBonus: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_4[4]/content[0]/ctn_upgrade[1]", true),
+          upgradeQualityBonus: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_5[5]/content[0]/ctn_upgrade[1]", true),
+          upgradeGoldGain: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_6[6]/content[0]/ctn_upgrade[1]", true),
+          upgradeCommonExponentMult: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_7[7]/content[0]/ctn_upgrade[1]", true),
+          upgradeMagnetChance: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_8[8]/content[0]/ctn_upgrade[1]", true),
+          upgradeChanceX2Magnets: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_9[9]/content[0]/ctn_upgrade[1]", true),
+          upgradeVPGain: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_10[10]/content[0]/ctn_upgrade[1]", true),
+          upgradePPGain: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_11[11]/content[0]/ctn_upgrade[1]", true),
+          upgradeSpawnPlusOne: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_12[12]/content[0]/ctn_upgrade[1]", true),
+          upgradeMergePlusTwo: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_13[13]/content[0]/ctn_upgrade[1]", true),
+          upgradeMoreMagnets: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_14[14]/content[0]/ctn_upgrade[1]", true),
         })
         .extend({
           async setMineralLevel(level: string) {

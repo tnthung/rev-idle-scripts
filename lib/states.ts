@@ -163,6 +163,15 @@ export class States {
     return Object.map(await rev.state<Record<string | number, CommonMineralData>>("gameData.minerals.commonMinerals"),
       (slot, data) => [slot, new CommonMineral(data)] as const);
   }
+
+  static async mineralUpgrades() {
+    return Object.map(await rev.state<Record<keyof typeof MineralUpgradeType, MineralsUpgradeData>>("gameData.minerals.upgrades"),
+      (type, data) => [type, new MineralUpgrade(data)] as const);
+  }
+
+  static async mineralUpgrade(type: MineralUpgradeType) {
+    return new MineralUpgrade(await rev.state<MineralsUpgradeData>(`gameData.minerals.upgrades.${MineralUpgradeType[type]}`));
+  }
 }
 
 
@@ -423,6 +432,62 @@ export class AttackRelic {
 }
 
 
+interface MineralsUpgradeData {
+  buyAmount: string;
+  canBuy: boolean;
+  cost: string;
+  effect: string;
+  effectNext: string;
+  income: string;
+  level: string;
+  Maxed: boolean;
+  maxLevel: string;
+  type: keyof typeof MineralUpgradeType;
+  Unlocked: boolean;
+}
+
+
+export class MineralUpgrade {
+  buyAmount: BigNum;
+  canBuy: boolean;
+  cost: BigNum;
+  effect: BigNum;
+  effectNext: BigNum;
+  income: BigNum;
+  level: BigNum;
+  Maxed: boolean;
+  maxLevel: BigNum;
+  type: MineralUpgradeType;
+  Unlocked: boolean;
+
+  constructor({
+    buyAmount,
+    canBuy,
+    cost,
+    effect,
+    effectNext,
+    income,
+    level,
+    Maxed,
+    maxLevel,
+    type,
+    Unlocked,
+  }: MineralsUpgradeData) {
+    this.buyAmount = new BigNum(buyAmount);
+    this.canBuy = canBuy;
+    this.cost = new BigNum(cost);
+    this.effect = new BigNum(effect);
+    this.effectNext = new BigNum(effectNext);
+    this.income = new BigNum(income);
+    this.level = new BigNum(level);
+    this.Maxed = Maxed;
+    this.maxLevel = new BigNum(maxLevel);
+    this.type = MineralUpgradeType[type];
+    this.Unlocked = Unlocked;
+  }
+}
+
+
 interface CommonMineralData {
   Id: number;
   income: string | number;
@@ -581,4 +646,22 @@ export enum PlanetUpper {
   PLUTO,
   CHIRON,
   FORTUNE,
+}
+
+export enum MineralUpgradeType {
+  MaxLevel = 0,
+  GridHeight = 1,
+  GridWidth = 2,
+  FallSpeed = 3,
+  LuckBonus = 4,
+  QualityBonus = 5,
+  GoldGain = 6,
+  CommonExponentMult = 7,
+  MagnetChance = 8,
+  ChanceX2Magnets = 9,
+  VPGain = 10,
+  PPGain = 11,
+  SpawnPlusOne = 12,
+  MergePlusTwo = 13,
+  MoreMagnets = 14,
 }

@@ -9,6 +9,7 @@ import {
   States,
   Planet,
   UnityZodiac,
+  MineralUpgradeType,
 } from "./lib/states.ts";
 import {
   BigNum,
@@ -67,6 +68,11 @@ export async function afterLoad() {
       try {
         const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
         updateLvl: if (lastGainedGold) {
+          if ((await States.mineralUpgrade(MineralUpgradeType.FallSpeed)).canBuy)
+            await Action.unity.minerals.upgradeFallSpeed().catch(() => {});
+          if ((await States.mineralUpgrade(MineralUpgradeType.MaxLevel)).canBuy)
+            await Action.unity.minerals.upgradeMaxLevel().catch(() => {});
+
           const curLevel = await States.currentMineralLevel();
           const maxLevel = await States.maxMineralLevel();
           const minOwnedLevel = BigNum.min(...Object.values(await States.commonMinerals()).map(m => m.level));
