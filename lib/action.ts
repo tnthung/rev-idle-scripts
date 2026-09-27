@@ -641,7 +641,7 @@ export class Action extends Function {
               States.attackRelic(index),
             ]);
 
-            if (relic.totalCost.gt(gold)) {
+            if (!relic.unlocked || relic.totalCost.gt(gold)) {
               if (first) break i;
               continue i;
             }
