@@ -65,12 +65,13 @@ export async function afterLoad() {
   (async () => {
     while (true) {
       try {
-        const currentLvl = await States.currentMineralLevel();
         const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
         updateLvl: if (lastGainedGold) {
-          const minLevel = BigNum.min(...Object.values(await States.commonMinerals()).map(m => m.level));
-          const level = new BigNum(lastGainedGold.exponent - 107n).min(minLevel);
-          if (currentLvl.eq(level)) break updateLvl;
+          const curLevel = await States.currentMineralLevel();
+          const maxLevel = await States.maxMineralLevel();
+          const minOwnedLevel = BigNum.min(...Object.values(await States.commonMinerals()).map(m => m.level));
+          const level = new BigNum(lastGainedGold.exponent - 107n).min(minOwnedLevel).min(maxLevel);
+          if (curLevel.eq(level)) break updateLvl;
           await Action.unity.minerals.setMineralLevel(level.toBigInt().toString());
           await rev.sleep(100);
         }

@@ -24,7 +24,7 @@ const UNITY_LEVEL_CAP          = 110;
 const ATTACK_CHECK_INTERVAL_MS = 500;
 const ZODIAC_QUALITY_MIN       = new BigNum(8000);
 const ATTACK_FAST_ETA_CAP_S    = new BigNum(30);
-const ATTACK_SLOW_ETA_CAP_S    = new BigNum(180);
+const ATTACK_SLOW_ETA_CAP_S    = new BigNum(300);
 const RELIC_SAVE_CAP           = new BigNum(2);
 
 
