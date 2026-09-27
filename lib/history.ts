@@ -29,6 +29,8 @@ export class UnityHistory {
   print() {
       const { sign, Element, Season, level, rarity, rarityPlus, score, quality, stats } = this.zodiacGot;
       const maxTypeLen = Math.max(...stats.map(stat => ZodiacStatType[stat.type].length)) + 1;
+      const last10AvgRarity = UnityHistory.last10AverageZodiacRarity();
+      const minZodiacRarity = Math.ceil(last10AvgRarity - ZodiacRarity.Immortal);
 
       console.log([
         "+-------------------------------------------------",
@@ -43,7 +45,7 @@ export class UnityHistory {
         "|     stats:",
         ...stats.map(stat =>
           `|         ${(ZodiacStatType[stat.type] + ":").padEnd(maxTypeLen)} ${stat.value.toString(4)}`),
-        "| Last 10 average zodiac rarity: " + UnityHistory.last10AverageZodiacRarity().toFixed(2),
+        `| Last 10 average zodiac rarity: ${last10AvgRarity.toFixed(2)} (+${minZodiacRarity})`,
         "+-------------------------------------------------"
       ].join("\n"));
   }
