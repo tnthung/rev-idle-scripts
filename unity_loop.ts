@@ -291,7 +291,7 @@ async function bootstrapEternity() {
 
   // claim IP twice to bootstrap infinity
   for (const _ of range(0, 2)) {
-    await pollFor(() => States.currentEP().then(v => v.exponent > 300n));
+    await pollFor(() => States.nextIP().then(v => v.exponent > 300n));
     await Action.main.claimIP();
   }
 
