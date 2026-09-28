@@ -439,6 +439,7 @@ export class Action extends Function {
             }),
           planetShop: new Action()
             .invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/astrology[0]/content[0]/views[0]/main[0]/ctn_content[1]/ctn_planet_shop[7]/btn_planet_shop[1]")
+            .sleep(100)
             .subLevel({
               mergeMode: new Action().invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/astrology[0]/content[0]/views[0]/planet_shop[1]/ctn_views[3]/ctn_center[0]/ctn_zodiac_actions[1]/btn_merging[0]"),
               enhanceMode: new Action().invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/astrology[0]/content[0]/views[0]/planet_shop[1]/ctn_views[3]/ctn_center[0]/ctn_zodiac_actions[1]/btn_enchancing[1]"),
