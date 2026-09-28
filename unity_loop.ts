@@ -46,6 +46,7 @@ export async function afterLoad() {
   Action.dismiss.loopDetached();
   Action.eternity.dilationTree.loadout.confirmLoad.loopDetached();
   await loadConfig();
+  UnityHistory.init();
 
   (async () => {
     while (true) {
@@ -169,6 +170,7 @@ export default async function main() {
       return;
     }
 
+    history.updateUI();
     history.print();
     history.pushGlobal();
     rev.global.unityStart = Date.now();

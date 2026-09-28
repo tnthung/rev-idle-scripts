@@ -16,7 +16,8 @@ declare const rev: Readonly<Rev & {
 
 const MAX_HISTORY: number = 20;
 
-let HISTORIES: UnityHistory[] | null = null;
+let expanded: boolean = true;
+let histories: UnityHistory[] | null = null;
 
 export class UnityHistory {
   constructor(
@@ -25,6 +26,34 @@ export class UnityHistory {
     public attackLevelReached: number,
     public zodiacGot:          UnityZodiac
   ) {}
+
+  static init() {
+    UnityHistory.ensureHistories();
+
+    rev.ui.lastHistory = {
+      text: "Last Run: Loading...",
+      font: "Consolas",
+      color: [0x44, 0x44, 0x44],
+      border: {
+        thickness: 4,
+        color: [0x33, 0x33, 0x33],
+      },
+      corner: {
+        radius: 4,
+      },
+      posX: 10,
+      posY: 10,
+      padding: {
+        thickness: 10,
+      },
+      onClick: () => {
+        expanded = !expanded;
+        histories?.at(-1)?.updateUI();
+      },
+    };
+
+    histories?.at(-1)?.updateUI();
+  }
 
   print() {
       const { sign, Element, Season, level, rarity, rarityPlus, score, quality, stats } = this.zodiacGot;
@@ -50,14 +79,31 @@ export class UnityHistory {
       ].join("\n"));
   }
 
+  updateUI() {
+    const { sign, level, rarity, rarityPlus, score, quality, stats } = this.zodiacGot;
+
+    if (expanded) {
+      rev.ui.lastHistory!.text = [
+        "Last Run:",
+        `| Last unity elapsed:   ${this.elapsedTime/1000}s`,
+        `| Attack level reached: ${this.attackLevelReached}`,
+        `| Gold earned:          ${this.goldGained.toString(4)}`,
+        `| Zodiac:               ${level.toBigInt()}lvl ${ZodiacSign[sign]} / ${ZodiacRarity[rarity]}${rarityPlus ? `+${rarityPlus}` : ""}`,
+      ].join("\n");
+      return;
+    }
+
+    rev.ui.lastHistory!.text = `Last Run: ${this.elapsedTime/1000}s`;
+  }
+
   static getHistories(n?: number) {
     this.ensureHistories();
-    return HISTORIES!.slice(- (n ?? HISTORIES!.length));
+    return histories!.slice(- (n ?? histories!.length));
   }
 
   private static ensureHistories() {
-    if (HISTORIES !== null) return true;
-    HISTORIES = this.fromGlobal();
+    if (histories !== null) return true;
+    histories = this.fromGlobal();
     return true;
   }
 
@@ -71,11 +117,11 @@ export class UnityHistory {
 
   pushGlobal() {
     UnityHistory.ensureHistories();
-    HISTORIES!.push(this);
-    if (HISTORIES!.length > MAX_HISTORY)
-      HISTORIES!.shift();
+    histories!.push(this);
+    if (histories!.length > MAX_HISTORY)
+      histories!.shift();
 
-    rev.global.unityHistories = HISTORIES?.map(({ elapsedTime, goldGained, attackLevelReached, zodiacGot }) => ({
+    rev.global.unityHistories = histories?.map(({ elapsedTime, goldGained, attackLevelReached, zodiacGot }) => ({
       elapsedTime,
       goldGained: goldGained.toString(),
       attackLevelReached,
@@ -102,7 +148,7 @@ export class UnityHistory {
   }
 
   static clearGlobal() {
-    HISTORIES = [];
+    histories = [];
     rev.global.unityHistories = [];
   }
 
