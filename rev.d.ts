@@ -22,6 +22,8 @@ type RevUiPadding = Readonly<{
 
 interface RevUiElement {
   text?: string;
+  /** Installed system font family name; empty or omitted uses the default font. */
+  font?: string;
   alignX?: "left" | "center" | "right";
   alignY?: "top" | "center" | "bottom";
   posX?: number;
