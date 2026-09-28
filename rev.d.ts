@@ -22,6 +22,8 @@ type RevUiPadding = Readonly<{
 
 interface RevUiElement {
   text?: string;
+  alignX?: "left" | "center" | "right";
+  alignY?: "top" | "center" | "bottom";
   posX?: number;
   posY?: number;
   lenX?: RevUiLength;
