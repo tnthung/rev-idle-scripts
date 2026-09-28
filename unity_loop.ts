@@ -49,6 +49,7 @@ export async function afterLoad() {
 
   (async () => {
     while (true) {
+      await rev.ensureRunning();
       try { await zodiacMaintenance(); }
       catch (e) { console.error(e); }
       await rev.sleep(1000);
@@ -57,6 +58,7 @@ export async function afterLoad() {
 
   (async () => {
     while (true) {
+      await rev.ensureRunning();
       try { await attackMaintenance(); }
       catch (e) { console.error(e); }
       await rev.sleep(1000);
@@ -65,13 +67,17 @@ export async function afterLoad() {
 
   (async () => {
     while (true) {
+      await rev.ensureRunning();
       try {
-        for (const type of ["FallSpeed", "MaxLevel", "GoldGain", "QualityBonus", "LuckBonus"] satisfies (keyof typeof MineralUpgradeType)[])
+        for (const type of ["FallSpeed", "MaxLevel", "GoldGain", "QualityBonus", "LuckBonus"] satisfies (keyof typeof MineralUpgradeType)[]) {
+          await rev.ensureRunning();
           if ((await States.mineralUpgrade(MineralUpgradeType[type])).canBuy) {
             await Action.unity.minerals[`upgrade${type}`]().catch(() => {});
             await rev.sleep(100);
           }
+        }
 
+        await rev.ensureRunning();
         const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
         updateLvl: if (lastGainedGold) {
           const curLevel = await States.currentMineralLevel();
@@ -83,6 +89,7 @@ export async function afterLoad() {
           await rev.sleep(100);
         }
 
+        await rev.ensureRunning();
         await Action.unity.minerals.trySpawn();
         await Action.unity.minerals.tryMerge();
       } catch (e) { console.error(e); }
@@ -196,18 +203,21 @@ export default async function main() {
 async function zodiacMaintenance() {
   let so: ScreenOwnership | undefined;
 
-  while (true) {
-    const action = await config.nextZodiacAction?.({
-      inventory: await States.unityZodiacInventory(),
-      planets:   await States.planetZodiacInventory(),
-    });
+  try {
+    while (true) {
+      await rev.ensureRunning();
+      const action = await config.nextZodiacAction?.({
+        inventory: await States.unityZodiacInventory(),
+        planets:   await States.planetZodiacInventory(),
+      });
 
-    if (!action) break;
-    so ??= await rev.screenOwnership();
-    await execute(action);
+      if (!action) break;
+      so ??= await rev.screenOwnership();
+      await execute(action);
+    }
+  } finally {
+    so?.release();
   }
-
-  so?.release();
 
 
   async function execute(action: ZodiacAction) {
@@ -260,6 +270,7 @@ async function attackMaintenance() {
   const relicsToBuy = (await config.relicsToBuy?.() ?? [])[Symbol.iterator]();
 
   while (true) {
+    await rev.ensureRunning();
     await Action.attack.upgradeRings();
     const nextRelic = relicsToBuy.next();
     if (nextRelic.done) break;
@@ -291,12 +302,14 @@ async function bootstrapEternity() {
 
   // claim IP twice to bootstrap infinity
   for (const _ of range(0, 2)) {
+    await rev.ensureRunning();
     await pollFor(() => States.nextIP().then(v => v.exponent > 300n));
     await Action.main.claimIP();
   }
 
   // claim EP four times to bootstrap eternity
   for (const _ of range(0, 4)) {
+    await rev.ensureRunning();
     await rev.sleep(500);
     await Action.main.claimEP();
   }
@@ -312,6 +325,8 @@ async function finishEternalChallenge() {
   let allComplete = true;
 
   for (const level of range(0, 10)) while (true) {
+    await rev.ensureRunning();
+
     // skip challenges that finishes all 5 levels
     const ec = await States.eternalChallenge(level);
     if (ec.completeDiff >= 5) break;
@@ -416,6 +431,7 @@ async function finishDTP40Loadout() {
 
   // prioritize applying the highest stage that is not yet finished
   for (const stage of DT_STAGES.reverse()) {
+    await rev.ensureRunning();
     if (stage.dtp > totalDTP || await stage.finished()) continue;
     await stage.loadout.apply();
     await pollFor(async () => await stage.finished(), 50, 10000);

@@ -2,7 +2,47 @@
 
 type RevJsonValue = null | boolean | number | string | RevJsonValue[] | { [key: string]: RevJsonValue };
 
+type RevUiColor = readonly [number, number, number] | readonly [number, number, number, number];
+type RevUiLength = number | Readonly<{ min?: number; max?: number }>;
+type RevUiBorder = Readonly<{ thickness?: number; color?: RevUiColor }>;
+type RevUiCorner = Readonly<{
+  radius?: number;
+  topLeft?: number;
+  topRight?: number;
+  bottomLeft?: number;
+  bottomRight?: number;
+}>;
+type RevUiPadding = Readonly<{
+  thickness?: number;
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}>;
+
+interface RevUiElement {
+  text?: string;
+  posX?: number;
+  posY?: number;
+  lenX?: RevUiLength;
+  lenY?: RevUiLength;
+  color?: RevUiColor;
+  textColor?: RevUiColor;
+  border?: RevUiBorder;
+  corner?: RevUiCorner;
+  padding?: RevUiPadding;
+  onHover?: () => void | Promise<void>;
+  onLeave?: () => void | Promise<void>;
+  onClick?: () => void | Promise<void>;
+}
+
 interface Rev {
+  /** Current pause state. Background work and UI callbacks continue while paused. */
+  readonly paused: boolean;
+  /** Waits for resume; rejects when this session stops. */
+  ensureRunning(): Promise<void>;
+  /** Session-owned UI. Assign a definition to create/replace; delete to remove. */
+  ui: Record<string, RevUiElement | undefined>;
   /** Reads one state path and unwraps its value. T describes the expected JSON snapshot. */
   state<T = RevJsonValue>(key: string): Promise<T>;
   /** Reads multiple paths into a shallow-frozen object keyed by those exact paths. */
@@ -48,7 +88,7 @@ interface Rev {
 
   /** Waits a non-negative integer number of real milliseconds. */
   sleep(milliseconds: number): Promise<void>;
-  /** Requests termination after the current invocation; does not exit the function. */
+  /** Terminates this session, interrupts JavaScript, and skips beforeStop. */
   stop(): void;
   /** Process-wide JSON storage. Missing keys read as undefined; assigning undefined stores null. */
   global: Record<string, RevJsonValue | undefined>;
