@@ -38,6 +38,10 @@ interface RevUiElement {
   onHover?: () => void | Promise<void>;
   onLeave?: () => void | Promise<void>;
   onClick?: () => void | Promise<void>;
+  /** Provided by the host on live elements. Calculated width in pixels, including padding and excluding border. */
+  readonly width?: () => Promise<number>;
+  /** Provided by the host on live elements. Calculated height in pixels, including padding and excluding border. */
+  readonly height?: () => Promise<number>;
 }
 
 interface Rev {
