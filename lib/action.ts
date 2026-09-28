@@ -565,7 +565,7 @@ export class Action extends Function {
               States.minMineralCost(),
             ]);
 
-            if (!(cur.eq(min) && gold.gte(cur)))
+            if (gold.exponent - cur.exponent < 3n)
               return false;
 
             using _so = await rev.screenOwnership();
