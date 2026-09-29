@@ -177,6 +177,8 @@ async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnit
   const elapsed = new BigNum((now - lastCheck) / 1000);
   const eta = damage.sign() > 0 ? attack.currentHP.mul(elapsed).div(damage) : null;
   if (slowAttack) console.log(`ETA for level ${previous.level}: ${eta?.toNumber().toFixed(2)}s`);
+
+  // keeps holding on current phase if the ETA is below the threshold
   if (eta?.lt(slowAttack ? ATTACK_SLOW_ETA_CAP_S : ATTACK_FAST_ETA_CAP_S))
     return false;
 
