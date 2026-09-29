@@ -334,14 +334,20 @@ async function mineralUpgradesToBuy(): Promise<MineralUpgradeType[]> {
 }
 
 
-async function shouldPolishPrestige(): Promise<boolean> {
-  return Object.values(await States.commonMinerals())
-    .some(mineral => mineral.level.gte(new BigNum(50)));
+async function shouldPolishPrestige(elapsed: number): Promise<boolean> {
+  return elapsed >= 1000000 || Object.values(await States.commonMinerals())
+    .some(mineral => mineral.level.gte(new BigNum(100)));
 }
 
 
 async function weaponsToBuy(): Promise<PolishUpgradeType[]> {
-  return [PolishUpgradeType.Sword];
+  return [
+    PolishUpgradeType.Sword,
+    PolishUpgradeType.Knuckles,
+    PolishUpgradeType.Bow,
+    PolishUpgradeType.Spear,
+    PolishUpgradeType.Axe,
+  ];
 }
 
 

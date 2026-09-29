@@ -26,6 +26,7 @@ declare const rev: Readonly<Rev & {
     unityStart: number;
     pauseDuration: number;
     pauseStart: number;
+    mineralStart: number;
   };
 }>;
 
@@ -99,7 +100,7 @@ export type Config = {
   nextZodiacAction?: (state: ZodiacSnapshot) => Promise<ZodiacAction | null>;
   relicsToBuy?: () => Promise<number[]>;
   mineralUpgradesToBuy?: () => Promise<MineralUpgradeType[]>;
-  shouldPolishPrestige?: () => Promise<boolean>;
+  shouldPolishPrestige?: (elapsed: number) => Promise<boolean>;
   weaponsToBuy?: () => Promise<PolishUpgradeType[]>;
 };
 
@@ -266,6 +267,9 @@ async function attackMaintenance() {
 async function mineralMaintenance() {
   let so: ScreenOwnership | undefined;
 
+  if (!rev.global.mineralStart)
+    rev.global.mineralStart = Date.now();
+
   { // Upgrade mineral upgrades
     for (const type of await config.mineralUpgradesToBuy?.() ?? []) {
       await rev.ensureRunning();
@@ -356,10 +360,11 @@ async function mineralMaintenance() {
 
   { // Prestige minerals when config indicates so
     await rev.ensureRunning();
-    if (await config.shouldPolishPrestige?.()) {
+    if (await config.shouldPolishPrestige?.(Date.now() - (rev.global.mineralStart ?? 0))) {
       so ??= await rev.screenOwnership();
       await Action.unity.minerals.polish.prestige();
       await Action.unity.minerals.polish.close();
+      rev.global.mineralStart = Date.now();
     }
   }
 
