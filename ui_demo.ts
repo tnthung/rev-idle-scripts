@@ -5,7 +5,7 @@ let invocations = 0;
 let maintenance = 0;
 let clicks = 0;
 
-export function afterLoad() {
+export async function afterLoad() {
   rev.ui.status = { text: "UI demo", posX: 20, posY: 20, padding: { thickness: 4 }, color: [30, 30, 30, 210] };
   rev.ui.button = {
     text: "Click, hover, then pause", posX: 100, posY: -100,
@@ -59,6 +59,27 @@ export function afterLoad() {
     async onClick() { if (harmlessControlPath) await rev.invoke(harmlessControlPath); },
   };
   rev.ui.stop = { text: "Stop demo", posX: 100, posY: -280, lenX: 100, lenY: 28, color: [120, 20, 20], onClick() { rev.stop(); } };
+
+  // Click the first button to change its automatic width; the second follows with a 12px gap.
+  rev.ui.variableWidth = {
+    text: "Grow me", posX: 100, posY: -325, lenX: { min: 100 }, lenY: 28,
+    padding: { thickness: 4, left: 8, right: 8 }, color: [30, 80, 120],
+    async onClick() {
+      const first = rev.ui.variableWidth;
+      const second = rev.ui.followWidth;
+      if (!first || !second) return;
+      const text = first.text = first.text === "Grow me" ? "Click to shrink this wider button" : "Grow me";
+      const width = await first.width();
+      if (rev.ui.variableWidth === first && rev.ui.followWidth === second && first.text === text)
+        second.posX = first.posX + width + 12;
+    },
+  };
+  rev.ui.followWidth = {
+    text: "I follow the first", posX: rev.ui.variableWidth.posX + await rev.ui.variableWidth.width() + 12,
+    posY: rev.ui.variableWidth.posY, lenY: 28,
+    padding: { thickness: 4, left: 8, right: 8 }, color: [80, 40, 120],
+    onClick() { console.log("Following button clicked"); },
+  };
 
   // Bounded monitor: continues for one minute, including during pause.
   (async () => {
