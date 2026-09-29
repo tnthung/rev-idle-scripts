@@ -597,7 +597,11 @@ export class Action extends Function {
           async merge(a: number, b: number) {
             await Action.unity.minerals();
             await rev.transfer(MINERAL_SLOT(a), MINERAL_SLOT(b));
-          }
+          },
+          async delete(slot: number) {
+            const MINERAL_TRASH_SLOT = "scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_left[1]/ctn_minerals[1]/views[0]/scrollview_common[0]/slot_mineral_common_trash[4]";
+            await rev.transfer(MINERAL_SLOT(slot), MINERAL_TRASH_SLOT);
+          },
         }),
     });
 

@@ -277,15 +277,32 @@ async function mineralMaintenance() {
     }
   }
 
-  { // Update mineral level based on last gained gold and common minerals
+  { // Delete minerals too weak and update mineral level based on last gained gold and common minerals
     await rev.ensureRunning();
     const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
-    const commonMinerals = await States.commonMinerals();
-    updateLvl: if (lastGainedGold && Object.keys(commonMinerals).length > 0) {
+    const commonMinerals = Object.entries(await States.commonMinerals());
+    updateLvl: if (lastGainedGold) {
       const curLevel = await States.currentMineralLevel();
       const maxLevel = await States.maxMineralLevel();
-      const minOwnedLevel = BigNum.min(...Object.values(commonMinerals).map(m => m.level));
-      const level = new BigNum(lastGainedGold.exponent - 107n).min(minOwnedLevel).min(maxLevel);
+      const minOwnedLevel = commonMinerals.length
+        ? BigNum.min(...commonMinerals.map(([_, m]) => m.level))
+        : maxLevel;
+      const rawAffordableLevel = new BigNum(lastGainedGold.exponent - 107n).min(maxLevel);
+
+      // Determine the target mineral level based on affordability and owned minerals
+      let level = minOwnedLevel;
+      if (rawAffordableLevel.sub(minOwnedLevel).gte(new BigNum(5))) {
+        level = rawAffordableLevel;
+
+        // Delete minerals that are below the target level
+        for (const [slot, mineral] of commonMinerals) {
+          if (mineral.level.lt(level)) {
+            await Action.unity.minerals.delete(Number(slot));
+            await rev.sleep(100);
+          }
+        }
+      }
+
       if (curLevel.eq(level)) break updateLvl;
       so ??= await rev.screenOwnership();
       await Action.unity.minerals.setMineralLevel(level.toBigInt().toString());
