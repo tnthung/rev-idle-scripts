@@ -23,6 +23,8 @@ type RevUiPadding = Readonly<{
 interface RevUiElement {
   /** Hides this element without removing it; omitted defaults to false. */
   hidden?: boolean;
+  /** Exact Unity hierarchy path used as the position anchor; omitted or empty uses the viewport. */
+  basedOn?: string;
   text?: string;
   /** Installed system font family name; empty or omitted uses the default font. */
   font?: string;
@@ -44,6 +46,10 @@ interface RevUiElement {
   readonly width?: () => Promise<number>;
   /** Provided by the host on live elements. Calculated height in pixels, including padding and excluding border. */
   readonly height?: () => Promise<number>;
+  /** Provided by the host on live elements. Calculated left position in top-left screen pixels. */
+  readonly globalXPos?: () => Promise<number>;
+  /** Provided by the host on live elements. Calculated top position in top-left screen pixels. */
+  readonly globalYPos?: () => Promise<number>;
 }
 
 interface Rev {

@@ -91,6 +91,13 @@ export async function afterLoad() {
     onClick() { console.log("Following button clicked"); },
   };
 
+  rev.ui.onlyInAttack = {
+    basedOn: "scene:-284/CANVAS[0]/safe_area[0]/views[1]/attacks[4]/content[0]/panel[0]",
+    text: "Only in attack",
+    posX: -10,
+    posY: -10,
+  };
+
   // Bounded monitor: continues for one minute, including during pause.
   (async () => {
     for (let tick = 0; tick < 240; tick++) {
