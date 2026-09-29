@@ -91,6 +91,17 @@ export async function afterLoad() {
     onClick() { console.log("Following button clicked"); },
   };
 
+  rev.ui.sizeDemo = {
+    text: "Font size: 14", size: 14, posX: 100, posY: -370,
+    padding: { thickness: 6, left: 10, right: 10 }, color: [60, 50, 100],
+    onClick() {
+      const demo = rev.ui.sizeDemo;
+      if (!demo) return;
+      demo.size = demo.size === 14 ? 28 : 14;
+      demo.text = `Font size: ${demo.size}`;
+    },
+  };
+
   rev.ui.onlyInAttack = {
     basedOn: "scene:-284/CANVAS[0]/safe_area[0]/views[1]/attacks[4]/content[0]/panel[0]",
     text: "Only in attack",
