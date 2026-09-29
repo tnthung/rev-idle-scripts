@@ -35,7 +35,7 @@ export class UnityHistory {
       font: "Consolas",
       color: [0x44, 0x44, 0x44],
       border: {
-        thickness: 4,
+        thickness: 2,
         color: [0x33, 0x33, 0x33],
       },
       corner: {
@@ -80,20 +80,19 @@ export class UnityHistory {
   }
 
   updateUI() {
-    const { sign, level, rarity, rarityPlus, score, quality, stats } = this.zodiacGot;
+    const { sign, level, rarity, rarityPlus } = this.zodiacGot;
 
     if (expanded) {
       rev.ui.lastHistory!.text = [
-        "Last Run:",
-        `| Last unity elapsed:   ${this.elapsedTime/1000}s`,
-        `| Attack level reached: ${this.attackLevelReached}`,
-        `| Gold earned:          ${this.goldGained.toString(4)}`,
-        `| Zodiac:               ${level.toBigInt()}lvl ${ZodiacSign[sign]} / ${ZodiacRarity[rarity]}${rarityPlus ? `+${rarityPlus}` : ""}`,
+        `Last Run (${(this.elapsedTime/1000).toFixed(1)}s):`,
+        `| Max Attack Level: ${this.attackLevelReached}`,
+        `| Gold Earned:      ${this.goldGained.toString(4)}`,
+        `| Zodiac Claimed:   ${ZodiacSign[sign]} ${level.toBigInt()}lvl ${ZodiacRarity[rarity]}${rarityPlus ? `+${rarityPlus}` : ""}`,
       ].join("\n");
       return;
     }
 
-    rev.ui.lastHistory!.text = `Last Run: ${this.elapsedTime/1000}s`;
+    rev.ui.lastHistory!.text = `Last Run (${(this.elapsedTime/1000).toFixed(1)}s)`;
   }
 
   static getHistories(n?: number) {
