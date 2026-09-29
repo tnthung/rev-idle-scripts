@@ -53,6 +53,16 @@ export async function afterLoad() {
     lenX: 160, lenY: 30, corner: { radius: 15, topLeft: 0 }, padding: { thickness: 6, left: 20 },
     color: [0, 50, 90], border: { thickness: 3, color: [0, 180, 255, 150] },
   };
+  rev.ui.toggleClip = {
+    text: "Hide clipped label", posX: -20, posY: 115, lenX: 160, lenY: 28, color: [40, 40, 40],
+    onClick() {
+      const clip = rev.ui.clip;
+      const toggle = rev.ui.toggleClip;
+      if (!clip || !toggle) return;
+      clip.hidden = !clip.hidden;
+      toggle.text = clip.hidden ? "Show clipped label" : "Hide clipped label";
+    },
+  };
   rev.ui.gameControl = {
     text: harmlessControlPath ? "Invoke chosen control" : "Game-control test disabled", posX: 100, posY: -235,
     lenX: 210, lenY: 28, color: [40, 40, 40],

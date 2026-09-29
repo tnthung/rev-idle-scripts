@@ -21,6 +21,8 @@ type RevUiPadding = Readonly<{
 }>;
 
 interface RevUiElement {
+  /** Hides this element without removing it; omitted defaults to false. */
+  hidden?: boolean;
   text?: string;
   /** Installed system font family name; empty or omitted uses the default font. */
   font?: string;
