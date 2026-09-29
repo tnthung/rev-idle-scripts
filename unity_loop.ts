@@ -44,6 +44,7 @@ export async function afterResume() {
 
 
 export async function afterLoad() {
+  rev.resize(1725, 600);
   console.clear();
   Action.dismiss.loopDetached();
   Action.eternity.dilationTree.loadout.confirmLoad.loopDetached();
@@ -360,7 +361,16 @@ async function mineralMaintenance() {
 
   { // Prestige minerals when config indicates so
     await rev.ensureRunning();
-    if (await config.shouldPolishPrestige?.(Date.now() - (rev.global.mineralStart ?? 0))) {
+    const elapsed = Date.now() - (rev.global.mineralStart ?? 0);
+
+    (rev.ui.mineralElapsed ??= {
+      basedOn: "scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/background[0]/background[0]",
+      posX: 10,
+      posY: -10,
+      text: "Elapsed: -",
+    }).text = `Elapsed: ${Math.floor(elapsed / 1000)}s`;
+
+    if (await config.shouldPolishPrestige?.(elapsed)) {
       so ??= await rev.screenOwnership();
       await Action.unity.minerals.polish.prestige();
       await Action.unity.minerals.polish.close();
