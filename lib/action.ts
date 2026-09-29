@@ -628,7 +628,6 @@ export class Action extends Function {
           console.log(`Upgrading attack ring ${i}`)
           await Action.attack[`buy${i as 1|2|3|4|5}`]();
           await Action.attack[`ascend${i as 1|2|3|4|5}`]();
-          await rev.sleep(500);
         }
 
         so?.release();
