@@ -62,6 +62,7 @@ type ActionStep = {
 
 const UNIT_BUTTON   = "scene:-148/CANVAS[0]/safe_area[0]/front_views[3]/layer_1[0]/zodiac_choice[11]/content[0]/btn_unite[7]";
 const BUY_DT_BUTTON = "scene:-148/CANVAS[0]/safe_area[0]/views[1]/eternity[2]/content[0]/panel[1]/views[0]/dilation_tree[6]/content[0]/ctn_upgrade[4]/btn_buy[4]";
+const BUY_PU_BUTTON = "scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/ctn_right[1]/ctn_info[1]/ctn_actions[4]/btn_buy[0]";
 
 export function ZODIAC_MERGE_SLOT(n: 0 | 1 | 2): string {
   return `scene:-148/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/astrology[0]/content[0]/views[0]/planet_shop[1]/ctn_views[3]/views[1]/view_merging[1]/content[1]/ctn_slots[1]/item_slot_zodiac_merge_${n+1}[${n}]`;
@@ -549,55 +550,54 @@ export class Action extends Function {
           upgradeSpawnPlusOne: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_12[12]/content[0]/ctn_upgrade[1]", true),
           upgradeMergePlusTwo: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_13[13]/content[0]/ctn_upgrade[1]", true),
           upgradeMoreMagnets: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_14[14]/content[0]/ctn_upgrade[1]", true),
+          polish: new Action()
+            .invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/btn_polish[2]")
+            .subLevel({
+              prestige: new Action().invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/ctn_left[0]/ctn_top[0]/btn_polish[2]"),
+              Sword: new Action()
+                .invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/ctn_left[0]/scrollview[1]/viewport[0]/content[0]/item_minerals_polish_weapon_0[0]")
+                .subLevel({
+                  purchase: new Action().invoke(BUY_PU_BUTTON)
+                }),
+              Axe: new Action()
+                .invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/ctn_left[0]/scrollview[1]/viewport[0]/content[0]/item_minerals_polish_weapon_1[1]")
+                .subLevel({
+                  purchase: new Action().invoke(BUY_PU_BUTTON)
+                }),
+              Spear: new Action()
+                .invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/ctn_left[0]/scrollview[1]/viewport[0]/content[0]/item_minerals_polish_weapon_2[2]")
+                .subLevel({
+                  purchase: new Action().invoke(BUY_PU_BUTTON)
+                }),
+              Bow: new Action()
+                .invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/ctn_left[0]/scrollview[1]/viewport[0]/content[0]/item_minerals_polish_weapon_3[3]")
+                .subLevel({
+                  purchase: new Action().invoke(BUY_PU_BUTTON)
+                }),
+              Knuckles: new Action()
+                .invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/ctn_left[0]/scrollview[1]/viewport[0]/content[0]/item_minerals_polish_weapon_4[4]")
+                .subLevel({
+                  purchase: new Action().invoke(BUY_PU_BUTTON)
+                }),
+            })
+            .extend({
+              async close() {
+                await rev
+                  .invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/btn_close[3]")
+                  .catch(() => {});
+              }
+            })
         })
         .extend({
           async setMineralLevel(level: string) {
             const MINERAL_LEVEL_INPUT = "scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_spawn[1]/ctn_spawn_actions[1]/ctn_spawn_level[1]/input_spawn_level[1]";
-            using _so = await rev.screenOwnership();
             await Action.unity.minerals();
             await rev.input(MINERAL_LEVEL_INPUT, level);
           },
-          async trySpawn() {
-            const [gold, lvl, cur, min] = await Promise.all([
-              States.currentGold(),
-              States.currentMineralLevel(),
-              States.currentMineralCost(),
-              States.minMineralCost(),
-            ]);
-
-            if (gold.exponent - cur.exponent < 3n)
-              return false;
-
-            using _so = await rev.screenOwnership();
-            console.log(`Spawning mineral level ${lvl.toInt()} at ${new Date().toISOString()}`);
-            await Action.unity.minerals.spawn();
-            return true;
-          },
-          async tryMerge() {
-            let canMerge = false;
-
-            const buckets = {} as Record<string, number[]>;
-            for (const [slot, mineral] of Object.entries(await States.commonMinerals()))
-              canMerge ||= (buckets[mineral.level.toInt()] ??= []).push(Number(slot)) >= 2;
-
-            if (!canMerge)
-              return false;
-
-            using _so = await rev.screenOwnership();
+          async merge(a: number, b: number) {
             await Action.unity.minerals();
-
-            while (canMerge) {
-              for (const [level, slots] of Object.entries(buckets))
-                if (slots.length >= 2) {
-                  await rev.transfer(MINERAL_SLOT(slots[0]), MINERAL_SLOT(slots[1]))
-                  await rev.sleep(100);
-                  (buckets[Number(level)+1] ??= []).push(slots[1]);
-                  buckets[Number(level)] = slots.slice(2);
-                }
-
-              canMerge = Object.values(buckets).some(slots => slots.length >= 2);
-            }
-          },
+            await rev.transfer(MINERAL_SLOT(a), MINERAL_SLOT(b));
+          }
         }),
     });
 

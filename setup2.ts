@@ -11,6 +11,8 @@ import {
   ZodiacElement,
   ZodiacSign,
   ZodiacStatType,
+  MineralUpgradeType,
+  PolishUpgradeType,
 } from "./lib/states.ts";
 import {
   BigNum,
@@ -52,7 +54,15 @@ declare const rev: Readonly<Rev & {
 }>;
 
 
-export default { shouldUnite: shouldUniteByZodiacPhase, uniteWith, nextZodiacAction, relicsToBuy } satisfies Config;
+export default {
+  shouldUnite: shouldUniteByZodiacPhase,
+  uniteWith,
+  nextZodiacAction,
+  relicsToBuy,
+  mineralUpgradesToBuy,
+  shouldPolishPrestige,
+  weaponsToBuy,
+} satisfies Config;
 
 
 let lastAtkLvl = 0;
@@ -309,6 +319,29 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
   }
 
   return null;
+}
+
+
+async function mineralUpgradesToBuy(): Promise<MineralUpgradeType[]> {
+  return [
+    MineralUpgradeType.FallSpeed,
+    MineralUpgradeType.GoldGain,
+    MineralUpgradeType.MaxLevel,
+    MineralUpgradeType.CommonExponentMult,
+    MineralUpgradeType.QualityBonus,
+    MineralUpgradeType.LuckBonus,
+  ];
+}
+
+
+async function shouldPolishPrestige(): Promise<boolean> {
+  return Object.values(await States.commonMinerals())
+    .some(mineral => mineral.level.gte(new BigNum(50)));
+}
+
+
+async function weaponsToBuy(): Promise<PolishUpgradeType[]> {
+  return [PolishUpgradeType.Sword];
 }
 
 

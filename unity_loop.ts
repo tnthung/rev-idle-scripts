@@ -10,6 +10,7 @@ import {
   Planet,
   UnityZodiac,
   MineralUpgradeType,
+  PolishUpgradeType,
 } from "./lib/states.ts";
 import {
   BigNum,
@@ -69,34 +70,11 @@ export async function afterLoad() {
   (async () => {
     while (true) {
       await rev.ensureRunning();
-      try {
-        for (const type of ["FallSpeed", "MaxLevel", "GoldGain", "QualityBonus", "LuckBonus"] satisfies (keyof typeof MineralUpgradeType)[]) {
-          await rev.ensureRunning();
-          if ((await States.mineralUpgrade(MineralUpgradeType[type])).canBuy) {
-            await Action.unity.minerals[`upgrade${type}`]().catch(() => {});
-            await rev.sleep(100);
-          }
-        }
-
-        await rev.ensureRunning();
-        const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
-        updateLvl: if (lastGainedGold) {
-          const curLevel = await States.currentMineralLevel();
-          const maxLevel = await States.maxMineralLevel();
-          const minOwnedLevel = BigNum.min(...Object.values(await States.commonMinerals()).map(m => m.level));
-          const level = new BigNum(lastGainedGold.exponent - 107n).min(minOwnedLevel).min(maxLevel);
-          if (curLevel.eq(level)) break updateLvl;
-          await Action.unity.minerals.setMineralLevel(level.toBigInt().toString());
-          await rev.sleep(100);
-        }
-
-        await rev.ensureRunning();
-        await Action.unity.minerals.trySpawn();
-        await Action.unity.minerals.tryMerge();
-      } catch (e) { console.error(e); }
+      try { await mineralMaintenance(); }
+      catch (e) { console.error(e); }
       await rev.sleep(1000);
     }
-  })().catch(e => console.error("Error in mineral spawn loop:", e));
+  })().catch(e => console.error("Error in mineral maintenance loop:", e));
 }
 
 
@@ -120,6 +98,9 @@ export type Config = {
   uniteWith?: () => Promise<Exclude<keyof typeof Action.main.unit, keyof Action>>;
   nextZodiacAction?: (state: ZodiacSnapshot) => Promise<ZodiacAction | null>;
   relicsToBuy?: () => Promise<number[]>;
+  mineralUpgradesToBuy?: () => Promise<MineralUpgradeType[]>;
+  shouldPolishPrestige?: () => Promise<boolean>;
+  weaponsToBuy?: () => Promise<PolishUpgradeType[]>;
 };
 
 let config: Config;
@@ -278,6 +259,108 @@ async function attackMaintenance() {
     if (nextRelic.done) break;
     await Action.attack.buyRelics([nextRelic.value]);
   }
+}
+
+
+async function mineralMaintenance() {
+  let so: ScreenOwnership | undefined;
+
+  { // Upgrade mineral upgrades
+    for (const type of await config.mineralUpgradesToBuy?.() ?? []) {
+      await rev.ensureRunning();
+      if ((await States.mineralUpgrade(type)).canBuy) {
+        so ??= await rev.screenOwnership();
+        const key = MineralUpgradeType[type] as keyof typeof MineralUpgradeType;
+        await Action.unity.minerals[`upgrade${key}`]();
+        await rev.sleep(100);
+      }
+    }
+  }
+
+  { // Update mineral level based on last gained gold and common minerals
+    await rev.ensureRunning();
+    const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
+    const commonMinerals = await States.commonMinerals();
+    updateLvl: if (lastGainedGold && Object.keys(commonMinerals).length > 0) {
+      const curLevel = await States.currentMineralLevel();
+      const maxLevel = await States.maxMineralLevel();
+      const minOwnedLevel = BigNum.min(...Object.values(commonMinerals).map(m => m.level));
+      const level = new BigNum(lastGainedGold.exponent - 107n).min(minOwnedLevel).min(maxLevel);
+      if (curLevel.eq(level)) break updateLvl;
+      so ??= await rev.screenOwnership();
+      await Action.unity.minerals.setMineralLevel(level.toBigInt().toString());
+      await rev.sleep(100);
+    }
+  }
+
+  spawn: { // Try to spawn
+    await rev.ensureRunning();
+
+    const [gold, lvl, cur] = await Promise.all([
+      States.currentGold(),
+      States.currentMineralLevel(),
+      States.currentMineralCost(),
+      States.minMineralCost(),
+    ]);
+
+    if (gold.exponent - cur.exponent < 3n)
+      break spawn;
+
+    so ??= await rev.screenOwnership();
+    console.log(`Spawning mineral level ${lvl.toInt()} at ${new Date().toISOString()}`);
+    await Action.unity.minerals.spawn();
+  }
+
+  merge: { // Try to merge minerals
+    await rev.ensureRunning();
+
+    let canMerge = false;
+
+    const buckets = {} as Record<string, number[]>;
+    for (const [slot, mineral] of Object.entries(await States.commonMinerals()))
+      canMerge ||= (buckets[mineral.level.toInt()] ??= []).push(Number(slot)) >= 2;
+    if (!canMerge) break merge;
+
+    so ??= await rev.screenOwnership();
+
+    while (canMerge) {
+      for (const [level, slots] of Object.entries(buckets))
+        if (slots.length >= 2) {
+          await Action.unity.minerals.merge(slots[0], slots[1]);
+          await rev.sleep(100);
+          (buckets[Number(level)+1] ??= []).push(slots[1]);
+          buckets[Number(level)] = slots.slice(2);
+        }
+
+      canMerge = Object.values(buckets).some(slots => slots.length >= 2);
+    }
+  }
+
+  { // Prestige minerals when config indicates so
+    await rev.ensureRunning();
+    if (await config.shouldPolishPrestige?.()) {
+      so ??= await rev.screenOwnership();
+      await Action.unity.minerals.polish.prestige();
+      await Action.unity.minerals.polish.close();
+    }
+  }
+
+  { // Purchase weapons
+    await rev.ensureRunning();
+
+    for (const type of await config.weaponsToBuy?.() ?? []) {
+      if ((await States.polishUpgrade(type)).CanBuy) {
+        so ??= await rev.screenOwnership();
+        const key = PolishUpgradeType[type] as keyof typeof PolishUpgradeType;
+        await Action.unity.minerals.polish[key].purchase();
+        await rev.sleep(100);
+      }
+    }
+
+    await Action.unity.minerals.polish.close();
+  }
+
+  so?.release();
 }
 
 

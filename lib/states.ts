@@ -164,13 +164,22 @@ export class States {
       (slot, data) => [slot, new CommonMineral(data)] as const);
   }
 
-  static async mineralUpgrades() {
+  static async mineralUpgrades(): Promise<Record<keyof typeof MineralUpgradeType, MineralUpgrade>> {
     return Object.map(await rev.state<Record<keyof typeof MineralUpgradeType, MineralsUpgradeData>>("gameData.minerals.upgrades"),
       (type, data) => [type, new MineralUpgrade(data)] as const);
   }
 
   static async mineralUpgrade(type: MineralUpgradeType) {
     return new MineralUpgrade(await rev.state<MineralsUpgradeData>(`gameData.minerals.upgrades.${MineralUpgradeType[type]}`));
+  }
+
+  static async polishUpgrades(): Promise<Record<keyof typeof PolishUpgradeType, PolishUpgrade>> {
+    return Object.map(await rev.state<Record<keyof typeof PolishUpgradeType, PolishUpgradeData>>(`gameData.minerals.polishUpgrades`),
+      (type, data) => [type, new PolishUpgrade(data)] as const);
+  }
+
+  static async polishUpgrade(type: PolishUpgradeType) {
+    return new PolishUpgrade(await rev.state<PolishUpgradeData>(`gameData.minerals.polishUpgrades.${PolishUpgradeType[type]}`));
   }
 }
 
@@ -524,6 +533,50 @@ export class CommonMineral {
 }
 
 
+interface PolishUpgradeData {
+  buyAmount: string;
+  CanBuy: boolean;
+  cost: string;
+  effect: string;
+  effectNext: string;
+  level: string;
+  milestones: Array<boolean>;
+  type: keyof typeof PolishUpgradeType;
+}
+
+
+export class PolishUpgrade {
+  buyAmount: BigNum;
+  CanBuy: boolean;
+  cost: BigNum;
+  effect: BigNum;
+  effectNext: BigNum;
+  level: BigNum;
+  milestones: Array<boolean>;
+  type: PolishUpgradeType;
+
+  constructor({
+    buyAmount,
+    CanBuy,
+    cost,
+    effect,
+    effectNext,
+    level,
+    milestones,
+    type,
+  }: PolishUpgradeData) {
+    this.buyAmount = new BigNum(buyAmount);
+    this.CanBuy = CanBuy;
+    this.cost = new BigNum(cost);
+    this.effect = new BigNum(effect);
+    this.effectNext = new BigNum(effectNext);
+    this.level = new BigNum(level);
+    this.milestones = milestones;
+    this.type = PolishUpgradeType[type];
+  }
+}
+
+
 export enum ZodiacElement {
   Fire,
   Water,
@@ -664,4 +717,12 @@ export enum MineralUpgradeType {
   SpawnPlusOne = 12,
   MergePlusTwo = 13,
   MoreMagnets = 14,
+}
+
+export enum PolishUpgradeType {
+  Sword = 0,
+  Axe = 1,
+  Spear = 2,
+  Bow = 3,
+  Knuckles = 4,
 }
