@@ -257,6 +257,7 @@ async function attackMaintenance() {
     await Action.attack.upgradeRings();
     const nextRelic = relicsToBuy.next();
     if (nextRelic.done) break;
+    await rev.ensureRunning();
     await Action.attack.buyRelics([nextRelic.value]);
   }
 }
