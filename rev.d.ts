@@ -61,6 +61,10 @@ type RevUiCallback = (this: RevUiElement & { states: Record<string, RevJsonValue
 interface Rev {
   /** Current pause state. Background work and UI callbacks continue while paused. */
   readonly paused: boolean;
+  /** Requests pause when JavaScript yields to the host; repeated requests are harmless. */
+  pause(): void;
+  /** Requests resume, including from a daemon or UI callback while paused. */
+  resume(): void;
   /** Waits for resume; rejects when this session stops. */
   ensureRunning(): Promise<void>;
   /** Session-owned UI. Assign a definition to create/replace; delete to remove. */
