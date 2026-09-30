@@ -105,8 +105,8 @@ interface Rev {
   press(key: string): void;
   /** Sets client-area dimensions, both positive finite 32-bit integers. */
   resize(width: number, height: number): void;
-  /** Acquires cooperative screen-input ownership for the session. */
-  screenOwnership(): Promise<ScreenOwnership>;
+  /** Acquires cooperative screen-input ownership; the optional label appears when hovering the lock icon. */
+  screenOwnership(label?: string): Promise<ScreenOwnership>;
 
   read_clipboard(): string;
   write_clipboard(text: string): void;
