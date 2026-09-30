@@ -1,6 +1,7 @@
 
 
 type RevJsonValue = null | boolean | number | string | RevJsonValue[] | { [key: string]: RevJsonValue };
+type RevDaemon = (this: void) => void | Promise<void>;
 
 type RevUiColor = readonly [number, number, number] | readonly [number, number, number, number];
 type RevUiLength = number | Readonly<{ min?: number; max?: number }>;
@@ -41,9 +42,10 @@ interface RevUiElement {
   border?: RevUiBorder;
   corner?: RevUiCorner;
   padding?: RevUiPadding;
-  onHover?: () => void | Promise<void>;
-  onLeave?: () => void | Promise<void>;
-  onClick?: () => void | Promise<void>;
+  states?: Record<string, RevJsonValue>;
+  readonly setOnClick?: (callback: RevUiCallback | null) => void;
+  readonly setOnHover?: (callback: RevUiCallback | null) => void;
+  readonly setOnLeave?: (callback: RevUiCallback | null) => void;
   /** Provided by the host on live elements. Calculated width in pixels, including padding and excluding border. */
   readonly width?: () => Promise<number>;
   /** Provided by the host on live elements. Calculated height in pixels, including padding and excluding border. */
@@ -54,6 +56,8 @@ interface RevUiElement {
   readonly globalYPos?: () => Promise<number>;
 }
 
+type RevUiCallback = (this: RevUiElement & { states: Record<string, RevJsonValue> }) => void | Promise<void>;
+
 interface Rev {
   /** Current pause state. Background work and UI callbacks continue while paused. */
   readonly paused: boolean;
@@ -61,6 +65,8 @@ interface Rev {
   ensureRunning(): Promise<void>;
   /** Session-owned UI. Assign a definition to create/replace; delete to remove. */
   ui: Record<string, RevUiElement | undefined>;
+  /** Session-wide background functions. Assign a function to register; delete a name to retire it. */
+  daemon: Record<string, RevDaemon | undefined>;
   /** Reads one state path and unwraps its value. T describes the expected JSON snapshot. */
   state<T = RevJsonValue>(key: string): Promise<T>;
   /** Reads multiple paths into a shallow-frozen object keyed by those exact paths. */
@@ -117,7 +123,7 @@ interface ScreenOwnership extends Disposable {
   release(): void;
 }
 
-/** Available inside the entry function and lifecycle hooks, not during module initialization. */
+/** Available inside the entry function and lifecycle hooks; main entry-module initialization runs before rev is installed, while background dependencies receive stable rev during evaluation. */
 declare const rev: Readonly<Rev>;
 
 

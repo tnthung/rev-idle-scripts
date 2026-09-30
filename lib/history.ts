@@ -16,7 +16,6 @@ declare const rev: Readonly<Rev & {
 
 const MAX_HISTORY: number = 20;
 
-let expanded: boolean = true;
 let histories: UnityHistory[] | null = null;
 
 export class UnityHistory {
@@ -46,11 +45,13 @@ export class UnityHistory {
       padding: {
         thickness: 10,
       },
-      onClick: () => {
-        expanded = !expanded;
-        histories?.at(-1)?.updateUI();
-      },
+      states: { expanded: true, expandedText: "Last Run: Loading...", collapsedText: "Last Run: Loading..." },
     };
+    rev.ui.lastHistory.setOnClick!(function() {
+      const expanded = this.states.expanded === true;
+      this.states.expanded = !expanded;
+      this.text = !expanded ? String(this.states.expandedText) : String(this.states.collapsedText);
+    });
 
     histories?.at(-1)?.updateUI();
   }
@@ -81,18 +82,17 @@ export class UnityHistory {
 
   updateUI() {
     const { sign, level, rarity, rarityPlus } = this.zodiacGot;
-
-    if (expanded) {
-      rev.ui.lastHistory!.text = [
-        `Last Run (${(this.elapsedTime/1000).toFixed(1)}s):`,
-        `| Max Attack Level: ${this.attackLevelReached}`,
-        `| Gold Earned:      ${this.goldGained.toString(4)}`,
-        `| Zodiac Claimed:   ${ZodiacSign[sign]} ${level.toBigInt()}lvl ${ZodiacRarity[rarity]}${rarityPlus ? `+${rarityPlus}` : ""}`,
-      ].join("\n");
-      return;
-    }
-
-    rev.ui.lastHistory!.text = `Last Run (${(this.elapsedTime/1000).toFixed(1)}s)`;
+    const expandedText = [
+      `Last Run (${(this.elapsedTime/1000).toFixed(1)}s):`,
+      `| Max Attack Level: ${this.attackLevelReached}`,
+      `| Gold Earned:      ${this.goldGained.toString(4)}`,
+      `| Zodiac Claimed:   ${ZodiacSign[sign]} ${level.toBigInt()}lvl ${ZodiacRarity[rarity]}${rarityPlus ? `+${rarityPlus}` : ""}`,
+    ].join("\n");
+    const collapsedText = `Last Run (${(this.elapsedTime/1000).toFixed(1)}s)`;
+    const element = rev.ui.lastHistory;
+    if (!element) return;
+    element.states = { ...element.states, expandedText, collapsedText };
+    element.text = element.states!.expanded === true ? expandedText : collapsedText;
   }
 
   static getHistories(n?: number) {
