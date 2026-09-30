@@ -4,50 +4,46 @@
 // The manual buttons cancel any pending automatic resume. Stop removes the demo UI.
 
 export function afterLoad() {
-  rev.ui.pauseDemoStatus = {
+  rev.ui("pauseDemoStatus", {
     text: "Pause/resume demo", posX: 20, posY: 60, lenX: 540, lenY: 38,
     size: 18, padding: { thickness: 8 }, color: [30, 45, 65, 240],
-  };
-  rev.ui.pauseDemoMain = {
+  });
+  rev.ui("pauseDemoMain", {
     text: "MAIN: waiting for Run", posX: 20, posY: 106, lenX: 540, lenY: 38,
     padding: { thickness: 8 }, color: [35, 55, 85, 240],
-  };
-  rev.ui.pauseDemoPause = {
+  });
+  rev.ui("pauseDemoPause", {
     text: "Pause", posX: 20, posY: 152, lenX: 170, lenY: 36,
     padding: { thickness: 8 }, color: [95, 65, 20, 240],
-  };
-  rev.ui.pauseDemoPause.setOnClick!(function() {
-    rev.ui.pauseDemoAuto!.states!.resumeAt = 0;
+  }).setOnClick(function() {
+    rev.ui.pauseDemoAuto!.states.resumeAt = 0;
     rev.pause();
   });
-  rev.ui.pauseDemoResume = {
+  rev.ui("pauseDemoResume", {
     text: "Resume", posX: 205, posY: 152, lenX: 170, lenY: 36,
     padding: { thickness: 8 }, color: [30, 80, 55, 240],
-  };
-  rev.ui.pauseDemoResume.setOnClick!(function() {
-    rev.ui.pauseDemoAuto!.states!.resumeAt = 0;
+  }).setOnClick(function() {
+    rev.ui.pauseDemoAuto!.states.resumeAt = 0;
     rev.resume();
   });
-  rev.ui.pauseDemoAuto = {
+  rev.ui("pauseDemoAuto", {
     text: "Pause for 3 seconds", posX: 20, posY: 196, lenX: 355, lenY: 36,
     padding: { thickness: 8 }, color: [65, 45, 95, 240], states: { resumeAt: 0 },
-  };
-  rev.ui.pauseDemoAuto.setOnClick!(function() {
+  }).setOnClick(function() {
     // UI state is shared between main and background callbacks.
     this.states.resumeAt = Date.now() + 3000;
     rev.pause();
   });
-  rev.ui.pauseDemoStop = {
+  rev.ui("pauseDemoStop", {
     text: "Stop demo", posX: 390, posY: 152, lenX: 170, lenY: 36,
     padding: { thickness: 8 }, color: [115, 40, 45, 240],
-  };
-  rev.ui.pauseDemoStop.setOnClick!(function() { rev.stop(); });
+  }).setOnClick(function() { rev.stop(); });
 
   rev.daemon.pauseDemoMonitor = async function() {
     for (let tick = 1; ; tick++) {
-      const resumeAt = Number(rev.ui.pauseDemoAuto!.states!.resumeAt);
+      const resumeAt = Number(rev.ui.pauseDemoAuto!.states.resumeAt);
       if (resumeAt > 0 && Date.now() >= resumeAt) {
-        rev.ui.pauseDemoAuto!.states!.resumeAt = 0;
+        rev.ui.pauseDemoAuto!.states.resumeAt = 0;
         rev.resume();
       }
       // The flag reflects the applied transition, after JavaScript yields.

@@ -21,7 +21,7 @@ type RevUiPadding = Readonly<{
   left?: number;
 }>;
 
-interface RevUiElement {
+interface RevUiElementAttr {
   /** Hides this element without removing it; omitted defaults to false. */
   hidden?: boolean;
   /** Exact Unity hierarchy path used as the position anchor; omitted or empty uses the viewport. */
@@ -43,20 +43,25 @@ interface RevUiElement {
   corner?: RevUiCorner;
   padding?: RevUiPadding;
   states?: Record<string, RevJsonValue>;
-  readonly setOnClick?: (callback: RevUiCallback | null) => void;
-  readonly setOnHover?: (callback: RevUiCallback | null) => void;
-  readonly setOnLeave?: (callback: RevUiCallback | null) => void;
-  /** Provided by the host on live elements. Calculated width in pixels, including padding and excluding border. */
-  readonly width?: () => Promise<number>;
-  /** Provided by the host on live elements. Calculated height in pixels, including padding and excluding border. */
-  readonly height?: () => Promise<number>;
-  /** Provided by the host on live elements. Calculated left position in top-left screen pixels. */
-  readonly globalXPos?: () => Promise<number>;
-  /** Provided by the host on live elements. Calculated top position in top-left screen pixels. */
-  readonly globalYPos?: () => Promise<number>;
 }
 
-type RevUiCallback = (this: RevUiElement & { states: Record<string, RevJsonValue> }) => void | Promise<void>;
+interface RevUiElement extends RevUiElementAttr {
+  hidden: boolean;
+  states: Record<string, RevJsonValue>;
+  setOnClick(callback: RevUiCallback | null): this;
+  setOnHover(callback: RevUiCallback | null): this;
+  setOnLeave(callback: RevUiCallback | null): this;
+  /** Provided by the host on live elements. Calculated width in pixels, including padding and excluding border. */
+  width(): Promise<number>;
+  /** Provided by the host on live elements. Calculated height in pixels, including padding and excluding border. */
+  height(): Promise<number>;
+  /** Provided by the host on live elements. Calculated left position in top-left screen pixels. */
+  globalXPos(): Promise<number>;
+  /** Provided by the host on live elements. Calculated top position in top-left screen pixels. */
+  globalYPos(): Promise<number>;
+}
+
+type RevUiCallback = (this: RevUiElement) => void | Promise<void>;
 
 interface Rev {
   /** Current pause state. Background work and UI callbacks continue while paused. */
@@ -67,8 +72,8 @@ interface Rev {
   resume(): void;
   /** Waits for resume; rejects when this session stops. */
   ensureRunning(): Promise<void>;
-  /** Session-owned UI. Assign a definition to create/replace; delete to remove. */
-  ui: Record<string, RevUiElement | undefined>;
+  /** Session-owned UI. Call with a definition to create or patch; delete a name to remove it. */
+  ui: { (name: string, attr: RevUiElementAttr): RevUiElement } & Record<string, RevUiElement | undefined>;
   /** Session-wide background functions. Assign a function to register; delete a name to retire it. */
   daemon: Record<string, RevDaemon | undefined>;
   /** Reads one state path and unwraps its value. T describes the expected JSON snapshot. */

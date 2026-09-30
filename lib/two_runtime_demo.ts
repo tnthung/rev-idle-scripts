@@ -18,7 +18,7 @@ export async function demoClick(this: RevUiElement & { states: Record<string, Re
 export async function demoWorker() {
   rev.global.twoRuntimeDemoWorkerRun = Number(rev.global.twoRuntimeDemoWorkerRun) + 1;
   const run = Number(rev.global.twoRuntimeDemoWorkerRun);
-  rev.ui.demoWorker!.states!.run = run;
+  rev.ui.demoWorker!.states.run = run;
   rev.ui.demoRegistry!.text = `Worker run ${run} started`;
 
   for (let tick = 1; Number(rev.global.twoRuntimeDemoReleaseThrough) < run; tick++) {

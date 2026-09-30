@@ -29,7 +29,7 @@ export class UnityHistory {
   static init() {
     UnityHistory.ensureHistories();
 
-    rev.ui.lastHistory = {
+    rev.ui("lastHistory", {
       text: "Last Run: Loading...",
       font: "Consolas",
       color: [0x44, 0x44, 0x44],
@@ -46,8 +46,7 @@ export class UnityHistory {
         thickness: 10,
       },
       states: { expanded: true, expandedText: "Last Run: Loading...", collapsedText: "Last Run: Loading..." },
-    };
-    rev.ui.lastHistory.setOnClick!(function() {
+    }).setOnClick(function() {
       const expanded = this.states.expanded === true;
       this.states.expanded = !expanded;
       this.text = !expanded ? String(this.states.expandedText) : String(this.states.collapsedText);
@@ -92,7 +91,7 @@ export class UnityHistory {
     const element = rev.ui.lastHistory;
     if (!element) return;
     element.states = { ...element.states, expandedText, collapsedText };
-    element.text = element.states!.expanded === true ? expandedText : collapsedText;
+    element.text = element.states.expanded === true ? expandedText : collapsedText;
   }
 
   static getHistories(n?: number) {

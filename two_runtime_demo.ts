@@ -15,91 +15,85 @@ export function afterLoad() {
   rev.global.twoRuntimeDemoWorkerRun = 0;
   rev.global.twoRuntimeDemoReleaseThrough = 0;
 
-  rev.ui.demoStatus = {
+  rev.ui("demoStatus", {
     text: "Two-runtime demo — starting background…", posX: 20, posY: 60,
     lenX: 640, lenY: 38, size: 18, padding: { thickness: 8 }, color: [30, 45, 65, 240],
-  };
-  rev.ui.demoInstructions = {
+  });
+  rev.ui("demoInstructions", {
     text: "Pause during a main wait, then try the buttons below. Resume continues the same token.",
     posX: 20, posY: 104, lenX: 640, lenY: 30, padding: { thickness: 6 }, color: [25, 30, 40, 240],
-  };
-  rev.ui.demoMain = {
+  });
+  rev.ui("demoMain", {
     text: "MAIN: waiting for Run and a game connection", posX: 20, posY: 142,
     lenX: 640, lenY: 60, padding: { thickness: 8 }, color: [35, 55, 85, 240],
-  };
-  rev.ui.demoDetached = {
+  });
+  rev.ui("demoDetached", {
     text: "DETACHED MAIN: 0 ticks", posX: 20, posY: 210,
     lenX: 640, lenY: 30, padding: { thickness: 6 }, color: [35, 55, 85, 240],
-  };
-  rev.ui.demoMailbox = {
+  });
+  rev.ui("demoMailbox", {
     text: "Send request to main | sent: 0, handled: 0", posX: 20, posY: 248,
     lenX: 640, lenY: 38, padding: { thickness: 8 }, color: [65, 45, 95, 240],
     states: { sent: 0, handled: 0 },
-  };
-  rev.ui.demoMailbox.setOnClick!(function() {
+  }).setOnClick(function() {
     // Element states are shared with main. This handler's locals are not.
     this.states.sent = Number(this.states.sent) + 1;
     this.text = `Send request to main | sent: ${this.states.sent}, handled: ${this.states.handled}`;
     this.color = [95, 55, 120, 240];
   });
 
-  rev.ui.demoAsync = {
+  rev.ui("demoAsync", {
     text: "Async click: multiply score by 10 | score: 1e30", posX: 20, posY: 294,
     lenX: 640, lenY: 54, padding: { thickness: 8 }, color: [30, 80, 70, 240],
     states: { started: 0, completed: 0, score: "1e30" },
-  };
+  })
+    .setOnClick(demoClick)
+    .setOnHover(function() { this.border = { thickness: 2, color: [100, 230, 180] }; })
+    .setOnLeave(function() { this.border = { thickness: 0 }; });
   // Defined in another module, whose BigNum import is reconstructed in background.
-  rev.ui.demoAsync.setOnClick!(demoClick);
-  rev.ui.demoAsync.setOnHover!(function() { this.border = { thickness: 2, color: [100, 230, 180] }; });
-  rev.ui.demoAsync.setOnLeave!(function() { this.border = { thickness: 0 }; });
-  rev.ui.demoToggle = {
+  rev.ui("demoToggle", {
     text: "Disable async clicks", posX: 20, posY: 356, lenX: 310, lenY: 34,
     padding: { thickness: 8 }, color: [50, 65, 80, 240], states: { enabled: true },
-  };
-  rev.ui.demoToggle.setOnClick!(function() {
+  }).setOnClick(function() {
     this.states.enabled = !this.states.enabled;
-    rev.ui.demoAsync!.setOnClick!(this.states.enabled ? demoClick : null);
+    rev.ui.demoAsync!.setOnClick(this.states.enabled ? demoClick : null);
     this.text = this.states.enabled ? "Disable async clicks" : "Enable async clicks";
   });
-  rev.ui.demoStop = {
+  rev.ui("demoStop", {
     text: "Stop demo", posX: 350, posY: 356, lenX: 310, lenY: 34,
     padding: { thickness: 8 }, color: [115, 40, 45, 240],
-  };
-  rev.ui.demoStop.setOnClick!(function() { rev.stop(); });
+  }).setOnClick(function() { rev.stop(); });
 
-  rev.ui.demoWorker = {
+  rev.ui("demoWorker", {
     text: "WORKER: starting…", posX: 20, posY: 410, lenX: 640, lenY: 38,
     padding: { thickness: 8 }, color: [65, 55, 30, 240], states: { run: 0 },
-  };
-  rev.ui.demoRegistry = {
+  });
+  rev.ui("demoRegistry", {
     text: "Worker registered", posX: 20, posY: 454, lenX: 640, lenY: 30,
     padding: { thickness: 6 }, color: [45, 40, 30, 240],
-  };
-  rev.ui.demoReplace = {
+  });
+  rev.ui("demoReplace", {
     text: "Replace worker", posX: 20, posY: 492, lenX: 200, lenY: 36,
     padding: { thickness: 8 }, color: [85, 65, 35, 240],
-  };
-  rev.ui.demoReplace.setOnClick!(function() {
+  }).setOnClick(function() {
     // Unregistering does not cancel an active run. A fresh registration waits for it.
     delete rev.daemon.demoWorker;
     rev.daemon.demoWorker = demoWorker;
     rev.ui.demoRegistry!.text = "Replacement registered. Finish the current run to let it start.";
   });
-  rev.ui.demoUnregister = {
+  rev.ui("demoUnregister", {
     text: "Unregister worker", posX: 240, posY: 492, lenX: 200, lenY: 36,
     padding: { thickness: 8 }, color: [85, 65, 35, 240],
-  };
-  rev.ui.demoUnregister.setOnClick!(function() {
+  }).setOnClick(function() {
     delete rev.daemon.demoWorker;
     rev.ui.demoRegistry!.text = "Unregistered. The current run continues until you finish it.";
   });
-  rev.ui.demoFinish = {
+  rev.ui("demoFinish", {
     text: "Finish current run", posX: 460, posY: 492, lenX: 200, lenY: 36,
     padding: { thickness: 8 }, color: [85, 65, 35, 240],
-  };
-  rev.ui.demoFinish.setOnClick!(function() {
+  }).setOnClick(function() {
     // Cooperative completion is separate from removing the registration.
-    rev.global.twoRuntimeDemoReleaseThrough = Number(rev.ui.demoWorker!.states!.run);
+    rev.global.twoRuntimeDemoReleaseThrough = Number(rev.ui.demoWorker!.states.run);
   });
 
   rev.daemon.demoWorker = demoWorker;
@@ -132,8 +126,8 @@ export default async function() {
 
     // Read shared state after the wait so clicks made during Pause are visible.
     const mailbox = rev.ui.demoMailbox!;
-    mailbox.states!.handled = mailbox.states!.sent;
-    mailbox.text = `Send request to main | sent: ${mailbox.states!.sent}, handled: ${mailbox.states!.handled}`;
+    mailbox.states.handled = mailbox.states.sent;
+    mailbox.text = `Send request to main | sent: ${mailbox.states.sent}, handled: ${mailbox.states.handled}`;
     mailbox.color = [30, 80, 70, 240];
     rev.ui.demoMain!.text = `MAIN: invocation ${invocation}, token ${token}, step ${step}/3\nContinued after await; requests handled`;
     await rev.sleep(1000);

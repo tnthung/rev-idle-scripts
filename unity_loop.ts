@@ -363,12 +363,12 @@ async function mineralMaintenance() {
     await rev.ensureRunning();
     const elapsed = Date.now() - (rev.global.mineralStart ?? 0);
 
-    (rev.ui.mineralElapsed ??= {
+    (rev.ui.mineralElapsed ?? rev.ui("mineralElapsed", {
       basedOn: "scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/background[0]/background[0]",
       posX: 10,
       posY: -10,
       text: "Elapsed: -",
-    }).text = `Elapsed: ${Math.floor(elapsed / 1000)}s`;
+    })).text = `Elapsed: ${Math.floor(elapsed / 1000)}s`;
 
     if (await config.shouldPolishPrestige?.(elapsed)) {
       so ??= await rev.screenOwnership();
