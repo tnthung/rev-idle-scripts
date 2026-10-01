@@ -27,6 +27,11 @@ import {
 declare const rev: Readonly<Rev & {
   ui: {
     "mineralElapsedClock": RevUiElement;
+    "lastHistory": RevUiElement<{
+      expanded: boolean;
+      expandedText: string;
+      collapsedText: string;
+    }>;
   };
 }>;
 
