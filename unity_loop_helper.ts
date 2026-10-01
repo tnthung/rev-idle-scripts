@@ -28,7 +28,6 @@ export async function updateUnityResult() {
 
   const lines = [
     `Current Run (${(currentElapsed/1000).toFixed(1)}s):`,
-    `| EC Completion:  ${await States.eternalChallengeCompletedCount()}/10`,
     `| Dilation Tree:  ${await States.spentDTP()}/${await States.totalDTP()}`,
     `| Unity Level:    ${(await States.unityLevel()).toBigInt()}`,
     `| Attack Level:   ${(await States.attackLevel()).level}`,

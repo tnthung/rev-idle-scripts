@@ -248,10 +248,9 @@ export default async function main() {
 
   // main loop logic goes here
   try {
-    if (!await bootstrapEternity()     .catch(e => console.error(`Errored when bootstrapping eternity:\n${e}`))) return;
-    if (!await finishEternalChallenge().catch(e => console.error(`Errored when finishing eternal challenge:\n${e}`))) return;
-    if (!await bootstrapDilation()     .catch(e => console.error(`Errored when bootstrapping dilation:\n${e}`))) return;
-    if (!await finishDTP40Loadout()    .catch(e => console.error(`Errored when finishing dilation:\n${e}`))) return;
+    if (!await bootstrapEternity() .catch(e => console.error(`Errored when bootstrapping eternity:\n${e}`))) return;
+    if (!await bootstrapDilation() .catch(e => console.error(`Errored when bootstrapping dilation:\n${e}`))) return;
+    if (!await finishDTP40Loadout().catch(e => console.error(`Errored when finishing dilation:\n${e}`))) return;
     await finishSpendingDTP();
   } catch (e) {
     console.error(`Errored in main loop:\n${e}`);
@@ -492,71 +491,6 @@ async function bootstrapEternity() {
   }
 
   return false;
-}
-
-
-async function finishEternalChallenge() {
-  states.allECCompleted ??= false;
-
-  // going through challenges
-  let allComplete = true;
-
-  for (const level of range(0, 10)) while (true) {
-    // skip challenges that finishes all 5 levels
-    const ec = await States.eternalChallenge(level);
-    if (ec.completeDiff >= 5) break;
-
-    console.log(`Starting eternal challenge level ${ec.challengeLevel + 1}, tier ${ec.completeDiff+1}`);
-    allComplete = false;
-
-    // make sure the selected EC is exited
-    await Action.eternity.challenges[`selectEC${<Range<1, 11>>(level+1)}`]();
-    if (ec.inChallenge) await Action.eternity.challenges.toggle();
-
-    // for first EC10, need to bootstrap dilation first
-    if (level === 9 && ec.completeDiff === 0)
-      try {
-        for (const _ of range(0, 3)) { // toggle 3 times
-          await Action.eternity.dilation.toggle();
-          await rev.sleep(500);
-          await Action.eternity.dilation.toggle();
-        }
-      } catch {}
-
-    // enter the challenge
-    await Action.eternity.challenges.toggle();
-
-    // wait until either the challenge is finished or timed out (10s MAX)
-    await pollFor(async () => !(await States.eternalChallenge(level)).inChallenge, 50, 10000);
-
-    // if timeout, start the next EC
-    if ((await States.eternalChallenge(level)).inChallenge) {
-      await Action.eternity.challenges.toggle();
-      break;
-    }
-  }
-
-  // if not all challenges are complete, keeps farming EP and dilation score
-  if (!allComplete) {
-    await rev.sleep(1000);
-    await Action.main.claimEP();
-
-    try {
-      await Action.eternity.dilation.toggle();
-      await rev.sleep(500);
-      await Action.eternity.dilation.toggle();
-    } catch {}
-
-    return false;
-  }
-
-  // print a message when all eternal challenges are completed
-  if (!states.allECCompleted) {
-    states.allECCompleted = true;
-    console.log(`All eternal challenges completed.`);
-  }
-
-  return true;
 }
 
 
