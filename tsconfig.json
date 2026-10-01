@@ -9,5 +9,5 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "../protocol/rev.d.ts"]
 }
