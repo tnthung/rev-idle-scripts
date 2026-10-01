@@ -184,7 +184,7 @@ export class States {
 }
 
 
-interface EternalChallengeData {
+export type EternalChallengeData = {
   completeDiff: number;
   inChallenge: boolean;
   Unlocked: boolean;
@@ -207,7 +207,7 @@ export class EternalChallenge {
 }
 
 
-interface UnityZodiacData {
+export type UnityZodiacData = {
   Element: keyof typeof ZodiacElement;
   IsEmpty: boolean;
   RangeOffset: number;
@@ -285,7 +285,7 @@ export class UnityZodiac {
 }
 
 
-interface UnityPlanetData {
+export type UnityPlanetData = {
   bonusType: keyof typeof PlanetStatType;
   bonusValue: string | number;
   type: keyof typeof Planet;
@@ -309,7 +309,7 @@ export class UnityPlanet {
 }
 
 
-interface ZodiacStatData {
+export type ZodiacStatData = {
   type: keyof typeof ZodiacStatType;
   value: string | number;
 }
@@ -327,7 +327,7 @@ export class ZodiacStat {
 }
 
 
-interface SacriStatData {
+export type SacriStatData = {
   type: keyof typeof ZodiacStatType;
   value: string | number;
   score: string | number;
@@ -351,7 +351,7 @@ export class SacriStat {
 }
 
 
-interface AttackLevelData {
+export type AttackLevelData = {
   currentHP: string | number;
   goldGain: string | number;
   level: string | number;
@@ -377,7 +377,7 @@ export class AttackLevel {
 }
 
 
-interface AttackRelicData {
+export type AttackRelicData = {
   ReqLevel: string | number;
   amount: string | number;
   baseCost: string | number;
@@ -441,7 +441,7 @@ export class AttackRelic {
 }
 
 
-interface MineralsUpgradeData {
+export type MineralsUpgradeData = {
   buyAmount: string;
   canBuy: boolean;
   cost: string;
@@ -497,7 +497,7 @@ export class MineralUpgrade {
 }
 
 
-interface CommonMineralData {
+export type CommonMineralData = {
   Id: number;
   income: string | number;
   Name: string;
@@ -533,7 +533,7 @@ export class CommonMineral {
 }
 
 
-interface PolishUpgradeData {
+export type PolishUpgradeData = {
   buyAmount: string;
   CanBuy: boolean;
   cost: string;
