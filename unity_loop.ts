@@ -1,6 +1,10 @@
 import { Action } from "./lib/action.ts";
 import { UnityHistory } from "./lib/history.ts";
 import {
+  UnityReportElementState,
+  updateUnityResult,
+} from "./unity_loop_helper.ts";
+import {
   DilationTree,
   DT_EXTRAS,
   DT_STAGES,
@@ -11,8 +15,6 @@ import {
   UnityZodiac,
   MineralUpgradeType,
   PolishUpgradeType,
-  ZodiacRarity,
-  ZodiacSign,
 } from "./lib/states.ts";
 import {
   BigNum,
@@ -27,11 +29,7 @@ import {
 declare const rev: Readonly<Rev & {
   ui: {
     "mineralElapsedClock": RevUiElement;
-    "lastHistory": RevUiElement<{
-      expanded: boolean;
-      expandedText: string;
-      collapsedText: string;
-    }>;
+    "unityReport": RevUiElement<UnityReportElementState>;
   };
 }>;
 
@@ -59,40 +57,42 @@ export async function afterLoad() {
   Action.dismiss.loopDetached();
   Action.confirm.loopDetached();
   await loadConfig();
-  UnityHistory.init();
 
   { // setup mineral elapsed clock
     await Action.unity.minerals.ensureCanSkip();
+
     rev.ui("mineralElapsedClock", {
       basedOn: "scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/background[0]/background[0]",
       posX: 10,
       posY: -10,
       text: "Elapsed: -",
     });
+
     rev.daemon("mineralElapsedClock", async function() {
       const MineralStart = new GlobalVar<number>("mineralStart");
 
       while (true) {
+        await rev.sleep(100);
+
         try {
-          if (rev.ui.mineralElapsedClock) {
-            const mineralStartTime = await MineralStart.get() ?? Date.now();
-            const elapsed = Date.now() - mineralStartTime;
-            rev.ui.mineralElapsedClock.text = `Elapsed: ${(elapsed/1000).toFixed(1)}s`;
-          }
-        } catch (e) {
-          console.error(e);
+          if (!rev.ui.mineralElapsedClock) continue;
+          const mineralStartTime = await MineralStart.get() ?? Date.now();
+          const elapsed = Date.now() - mineralStartTime;
+          rev.ui.mineralElapsedClock.text = `Elapsed: ${(elapsed/1000).toFixed(1)}s`;
         }
 
-        await rev.sleep(100);
+        catch (e) {
+          console.error(e);
+        }
       }
     });
   }
 
   { // setup unity run report
-    const DEFAULT_REPORT = "Last Run: Loading...";
+    const LAST_DEFAULT_REPORT = "Last Run: Loading...";
 
-    rev.ui("lastHistory", {
-      text: DEFAULT_REPORT,
+    rev.ui("unityReport", {
+      hidden: true,
       font: "Consolas",
       color: [0x44, 0x44, 0x44],
       border: {
@@ -109,45 +109,24 @@ export async function afterLoad() {
       },
       states: {
         expanded: true,
-        expandedText: DEFAULT_REPORT,
-        collapsedText: DEFAULT_REPORT,
       },
-    }).setOnClick(function() {
+    }).setOnClick(async function() {
+      using _ = await rev.mutex("unityReportExpandedUpdate")
       const expanded = this.states.expanded === true;
       this.states.expanded = !expanded;
-      this.text = !expanded
-        ? String(this.states.expandedText)
-        : String(this.states.collapsedText);
+      await updateUnityResult();
     });
-    (async () => {
+
+    rev.daemon("unityReport", async function() {
       while (true) {
-        await rev.sleep(500);
-
+        await rev.sleep(100);
         try {
-          const element = rev.ui.lastHistory;
-          if (!element) continue;
-
-          const lastHistory = UnityHistory.getHistories(-1).at(-1);
-          if (!lastHistory) continue;
-
-          const { elapsedTime, attackLevelReached, goldGained, zodiacGot } = lastHistory;
-
-          const { sign, level, rarity, rarityPlus } = zodiacGot;
-          const expandedText = [
-            `Last Run (${(elapsedTime/1000).toFixed(1)}s):`,
-            `| Max Attack Level: ${attackLevelReached}`,
-            `| Gold Earned:      ${goldGained.toString(4)}`,
-            `| Zodiac Claimed:   ${ZodiacSign[sign]} ${level.toBigInt()}lvl ${ZodiacRarity[rarity]}${rarityPlus ? `+${rarityPlus}` : ""}`,
-          ].join("\n");
-          const collapsedText = `Last Run (${(elapsedTime/1000).toFixed(1)}s)`;
-
-          element.states = { ...element.states, expandedText, collapsedText };
-          element.text = element.states.expanded === true ? expandedText : collapsedText;
-        } catch (e) {
-          console.error(e);
+          using _ = await rev.mutex("unityReportExpandedUpdate")
+          await updateUnityResult();
         }
+        catch (e) { console.error(e); }
       }
-    })();
+    });
   }
 
   (async () => {

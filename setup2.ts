@@ -1,5 +1,5 @@
 // cspell:ignore Mult Mults loadouts
-import type { Config, ZodiacSnapshot, UnityReportElementState } from "./unity_loop.ts";
+import type { Config, ZodiacSnapshot } from "./unity_loop.ts";
 
 import {
   UnityHistory,
@@ -20,6 +20,9 @@ import {
   UnityDirection,
   stringify,
 } from "./lib/utils.ts";
+import type {
+  UnityReportElementState
+} from "./unity_loop_helper.ts";
 
 
 const ZODIAC_SPARE_MIN         = 3;
