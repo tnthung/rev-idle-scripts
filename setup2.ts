@@ -341,7 +341,7 @@ async function mineralUpgradesToBuy(): Promise<MineralUpgradeType[]> {
 
 
 async function shouldPolishPrestige(elapsed: number): Promise<boolean> {
-  return elapsed >= 60000 || Object.values(await States.commonMinerals())
+  return Object.values(await States.commonMinerals())
     .some(mineral => mineral.level.gte(new BigNum(100)));
 }
 
