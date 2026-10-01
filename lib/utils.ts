@@ -335,6 +335,10 @@ export class GlobalVar<T extends RevJsonValue> {
     using _ = await rev.mutex(this.key);
     rev.global[this.key] = fn(rev.global[this.key] as T);
   }
+
+  updateUnguarded(fn: (value: T | undefined) => T): void {
+    rev.global[this.key] = fn(rev.global[this.key] as T);
+  }
 }
 
 
