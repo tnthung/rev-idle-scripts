@@ -31,6 +31,7 @@ export async function updateUnityResult() {
     `| Dilation Tree:  ${await States.spentDTP()}/${await States.totalDTP()}`,
     `| Unity Level:    ${(await States.unityLevel()).toBigInt()}`,
     `| Attack Level:   ${(await States.attackLevel()).level}`,
+    `| Gold On Unite:  ${(await States.nextGold()).toString(4)}`,
     `| Zodiac Loadout: ${element.states.zodiacLoadout}`,
   ];
 
