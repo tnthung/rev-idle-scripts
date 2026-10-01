@@ -72,10 +72,13 @@ interface Rev {
   resume(): void;
   /** Waits for resume; rejects when this session stops. */
   ensureRunning(): Promise<void>;
-  /** Session-owned UI. Call with a definition to create or patch; delete a name to remove it. */
-  ui: { (name: string, attr: RevUiElementAttr): RevUiElement } & Record<string, RevUiElement | undefined>;
-  /** Session-wide background functions. Assign a function to register; delete a name to retire it. */
-  daemon: Record<string, RevDaemon | undefined>;
+  /** Session-owned UI. Call with attributes to create or patch, or null to remove. */
+  ui: {
+    (name: string, attr: null): void;
+    (name: string, attr: RevUiElementAttr): RevUiElement;
+  } & Readonly<Record<string, RevUiElement | undefined>>;
+  /** Session-wide background functions. Call with a function to register or replace, or null to retire. */
+  daemon(name: string, fn: RevDaemon | null): void;
   /** Reads one state path and unwraps its value. T describes the expected JSON snapshot. */
   state<T = RevJsonValue>(key: string): Promise<T>;
   /** Reads multiple paths into a shallow-frozen object keyed by those exact paths. */

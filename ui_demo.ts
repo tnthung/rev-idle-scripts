@@ -42,7 +42,7 @@ export async function afterLoad() {
   rev.ui("replace", {
     text: "Delete / recreate signal", posX: 100, posY: -190, lenX: 180, lenY: 28, color: [40, 40, 40],
   }).setOnClick(function() {
-    if (rev.ui.signal) delete rev.ui.signal;
+    if (rev.ui.signal) rev.ui("signal", null);
     else rev.ui("signal", { posX: 70, posY: -105, lenX: 16, lenY: 16, corner: { radius: 8 }, color: [0, 255, 0] });
   });
   rev.ui("clip", {
@@ -104,7 +104,7 @@ export async function afterLoad() {
     text: "Only in attack", posX: -10, posY: -10,
   });
 
-  rev.daemon.monitor = async function() {
+  rev.daemon("monitor", async function() {
     for (let tick = 0; tick < 240; tick++) {
       rev.global.demoMonitor = tick;
       const invocations = typeof rev.global.demoInvocations === "number" ? rev.global.demoInvocations : 0;
@@ -114,7 +114,7 @@ export async function afterLoad() {
       await rev.sleep(250);
     }
     if (rev.ui.status) rev.ui.status.text += " (monitor finished)";
-  };
+  });
 
   (async function() {
     for (let tick = 0; tick < 60; tick++) {

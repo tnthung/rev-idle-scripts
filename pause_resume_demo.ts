@@ -39,7 +39,7 @@ export function afterLoad() {
     padding: { thickness: 8 }, color: [115, 40, 45, 240],
   }).setOnClick(function() { rev.stop(); });
 
-  rev.daemon.pauseDemoMonitor = async function() {
+  rev.daemon("pauseDemoMonitor", async function() {
     for (let tick = 1; ; tick++) {
       const resumeAt = Number(rev.ui.pauseDemoAuto!.states.resumeAt);
       if (resumeAt > 0 && Date.now() >= resumeAt) {
@@ -50,7 +50,7 @@ export function afterLoad() {
       rev.ui.pauseDemoStatus!.text = `${rev.paused ? "PAUSED" : "RUNNING"} | background ticks: ${tick}`;
       await rev.sleep(100);
     }
-  };
+  });
 }
 
 export function beforePause() {

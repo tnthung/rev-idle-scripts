@@ -77,15 +77,15 @@ export function afterLoad() {
     padding: { thickness: 8 }, color: [85, 65, 35, 240],
   }).setOnClick(function() {
     // Unregistering does not cancel an active run. A fresh registration waits for it.
-    delete rev.daemon.demoWorker;
-    rev.daemon.demoWorker = demoWorker;
+    rev.daemon("demoWorker", null);
+    rev.daemon("demoWorker", demoWorker);
     rev.ui.demoRegistry!.text = "Replacement registered. Finish the current run to let it start.";
   });
   rev.ui("demoUnregister", {
     text: "Unregister worker", posX: 240, posY: 492, lenX: 200, lenY: 36,
     padding: { thickness: 8 }, color: [85, 65, 35, 240],
   }).setOnClick(function() {
-    delete rev.daemon.demoWorker;
+    rev.daemon("demoWorker", null);
     rev.ui.demoRegistry!.text = "Unregistered. The current run continues until you finish it.";
   });
   rev.ui("demoFinish", {
@@ -96,14 +96,14 @@ export function afterLoad() {
     rev.global.twoRuntimeDemoReleaseThrough = Number(rev.ui.demoWorker!.states.run);
   });
 
-  rev.daemon.demoWorker = demoWorker;
-  rev.daemon.demoMonitor = async function() {
+  rev.daemon("demoWorker", demoWorker);
+  rev.daemon("demoMonitor", async function() {
     for (let tick = 1; ; tick++) {
       rev.ui.demoStatus!.text = `${rev.paused ? "PAUSED" : "RUNNING"} | BACKGROUND: ${tick} ticks | worker registered: ${"demoWorker" in rev.daemon}`;
       rev.ui.demoStatus!.color = rev.paused ? [95, 65, 20, 240] : [30, 70, 55, 240];
       await rev.sleep(250);
     }
-  };
+  });
 
   // Ordinary detached work belongs to main. No explicit pause checkpoint is needed.
   (async function() {
