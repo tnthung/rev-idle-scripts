@@ -20,7 +20,7 @@ declare global {
   interface ObjectConstructor {
     map<T, U>(
       obj: Record<string, T>,
-      fn: (key: string, value: T) => [string, U] | null,
+      fn: (key: string, value: T) => [string, U] | null | undefined,
     ): Record<string, U>;
   }
 
@@ -32,7 +32,7 @@ declare global {
 Object.map = function(obj, fn) {
   return Object.fromEntries(Object.entries(obj)
     .map(([key, value]) => fn(key, value))
-    .filter(entry => entry !== null));
+    .filter(entry => entry != null));
 };
 
 Object.prototype.dbg = function(message?: string) {

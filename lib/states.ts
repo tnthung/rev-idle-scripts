@@ -9,43 +9,43 @@ export class States {
   }
 
   static async infinities() {
-    return new BigNum(await rev.state<string | number>("gameData.infinity.infs"));
+    return new BigNum(await rev.state<string>("gameData.infinity.infs"));
   }
 
   static async eternities() {
-    return new BigNum(await rev.state<string | number>("gameData.eternity.eters"));
+    return new BigNum(await rev.state<string>("gameData.eternity.eters"));
   }
 
   static async unities() {
-    return new BigNum(await rev.state<string | number>("gameData.unity.unities"));
+    return new BigNum(await rev.state<string>("gameData.unity.unities"));
   }
 
   static async currentIP() {
-    return new BigNum(await rev.state<string | number>("IP"));
+    return new BigNum(await rev.state<string>("IP"));
   }
 
   static async currentEP() {
-    return new BigNum(await rev.state<string | number>("EP"));
+    return new BigNum(await rev.state<string>("EP"));
   }
 
   static async currentDP() {
-    return new BigNum(await rev.state<string | number>("gameData.eternity.DP"));
+    return new BigNum(await rev.state<string>("gameData.eternity.DP"));
   }
 
   static async currentGold() {
-    return new BigNum(await rev.state<string | number>("gameData.attacks.gold"));
+    return new BigNum(await rev.state<string>("gameData.attacks.gold"));
   }
 
   static async nextIP() {
-    return new BigNum(await rev.state<string | number>("nextIP"));
+    return new BigNum(await rev.state<string>("nextIP"));
   }
 
   static async nextEP() {
-    return new BigNum(await rev.state<string | number>("nextEP"));
+    return new BigNum(await rev.state<string>("nextEP"));
   }
 
   static async nextGold() {
-    return new BigNum(await rev.state<string | number>("gameData.attacks.goldOnUnity"));
+    return new BigNum(await rev.state<string>("gameData.attacks.goldOnUnity"));
   }
 
   static async supernovaLevel() {
@@ -53,11 +53,11 @@ export class States {
   }
 
   static async totalAP() {
-    return new BigNum(await rev.state<string | number>("gameData.eternity.APbought"));
+    return new BigNum(await rev.state<string>("gameData.eternity.APbought"));
   }
 
   static async DilationMaxScore() {
-    return new BigNum(await rev.state<string | number>("dilationMaxScore"));
+    return new BigNum(await rev.state<string>("dilationMaxScore"));
   }
 
   static async inDilation() {
@@ -77,16 +77,16 @@ export class States {
   }
 
   static async unityLevel() {
-    return new BigNum(await rev.state<string | number>("unityLevel"));
+    return new BigNum(await rev.state<string>("unityLevel"));
   }
 
   static async unityZodiacInventory(): Promise<Record<string, UnityZodiac>> {
-    return Object.map(await rev.state<Record<string, UnityZodiacData>>("gameData.unity.inventory"),
+    return Object.map(await rev.state<Partial<Record<number, UnityZodiacData>>>("gameData.unity.inventory"),
       (key, value) => value && [key, new UnityZodiac(value)]);
   }
 
-  static async planetZodiacInventory(): Promise<Record<keyof typeof Planet, UnityZodiac>> {
-    return Object.map(await rev.state<Record<keyof typeof Planet, UnityZodiacData>>("gameData.unity.planetsInventory"),
+  static async planetZodiacInventory(): Promise<Partial<Record<keyof typeof Planet, UnityZodiac>>> {
+    return Object.map(await rev.state<Partial<Record<keyof typeof Planet, UnityZodiacData>>>("gameData.unity.planetsInventory"),
       (key, value) => value && [key, new UnityZodiac(value)]);
   }
 
@@ -104,7 +104,7 @@ export class States {
   }
 
   static async currentAttackDamage() {
-    return new BigNum(await rev.state<string | number>("gameData.attacks.totalAtkMult"));
+    return new BigNum(await rev.state<string>("gameData.attacks.totalAtkMult"));
   }
 
   static async eternalChallenge(n: number) {
@@ -115,13 +115,13 @@ export class States {
     return await rev.state<number>("challengesCompletedCount");
   }
 
-  static async nextUnityZodiacs(): Promise<[UnityZodiac, UnityZodiac, UnityZodiac, UnityZodiac]> {
-    return (await rev.state<UnityZodiacData[]>("gameData.unity.NextZodiacs")).map(zodiac => new UnityZodiac(zodiac)) as any;
+  static async nextUnityZodiacs() {
+    return (await rev.state<UnityZodiacData[]>("gameData.unity.NextZodiacs")).map(zodiac => new UnityZodiac(zodiac));
   }
 
   static async sacrificeState() {
-    return Object.entries(await rev.state<Partial<Record<keyof typeof ZodiacStatType, SacriStatData>>>("gameData.unity.sacriStats"))
-      .map(([type, {value, score, showable}]) => new SacriStat({ type: type as keyof typeof ZodiacStatType, value, score, showable }));
+    return Object.values(await rev.state<Partial<Record<keyof typeof ZodiacStatType, SacriStatData>>>("gameData.unity.sacriStats"))
+      .map(data => new SacriStat(data));
   }
 
   static async attackLevel() {
@@ -133,9 +133,9 @@ export class States {
     const values = await rev.state(...indexes.flatMap(index => [
       `gameData.attacks.revolutions.${index}.IsActive`,
       `gameData.attacks.revolutions.${index}.mult`,
-    ])) as Readonly<Record<string, boolean | string | number>>;
+    ])) as Readonly<Record<string, boolean | string>>;
     return indexes.map(index => values[`gameData.attacks.revolutions.${index}.IsActive`]
-      ? new BigNum(values[`gameData.attacks.revolutions.${index}.mult`] as string | number)
+      ? new BigNum(values[`gameData.attacks.revolutions.${index}.mult`] as string)
       : null);
   }
 
@@ -144,32 +144,32 @@ export class States {
   }
 
   static async maxAttackLevelReached() {
-    return Number(await rev.state<string | number>("gameData.attacks.maxLevelReached"));
+    return Number(await rev.state<string>("gameData.attacks.maxLevelReached"));
   }
 
   static async currentMineralLevel() {
-    return new BigNum(await rev.state<string | number>("gameData.minerals.curMineralLevel"));
+    return new BigNum(await rev.state<string>("gameData.minerals.curMineralLevel"));
   }
 
   static async currentMineralCost() {
-    return new BigNum(await rev.state<string | number>("gameData.minerals.curMineralCost"));
+    return new BigNum(await rev.state<string>("gameData.minerals.curMineralCost"));
   }
 
   static async minMineralCost() {
-    return new BigNum(await rev.state<string | number>("gameData.minerals.minMineralCost"));
+    return new BigNum(await rev.state<string>("gameData.minerals.minMineralCost"));
   }
 
   static async maxMineralLevel() {
-    return new BigNum(await rev.state<string | number>("gameData.minerals.maxMineralLevel"));
+    return new BigNum(await rev.state<string>("gameData.minerals.maxMineralLevel"));
   }
 
   static async commonMinerals() {
-    return Object.map(await rev.state<Record<string | number, CommonMineralData>>("gameData.minerals.commonMinerals"),
-      (slot, data) => [slot, new CommonMineral(data)] as const);
+    return Object.map(await rev.state<Partial<Record<number, CommonMineralData>>>("gameData.minerals.commonMinerals"),
+      (slot, data) => data && [slot, new CommonMineral(data)] as const);
   }
 
-  static async mineralUpgrades(): Promise<Record<keyof typeof MineralUpgradeType, MineralUpgrade>> {
-    return Object.map(await rev.state<Record<keyof typeof MineralUpgradeType, MineralsUpgradeData>>("gameData.minerals.upgrades"),
+  static async mineralUpgrades(): Promise<Partial<Record<keyof typeof MineralUpgradeType, MineralUpgrade>>> {
+    return Object.map(await rev.state<Partial<Record<keyof typeof MineralUpgradeType, MineralsUpgradeData>>>("gameData.minerals.upgrades"),
       (type, data) => [type, new MineralUpgrade(data)] as const);
   }
 
@@ -177,8 +177,8 @@ export class States {
     return new MineralUpgrade(await rev.state<MineralsUpgradeData>(`gameData.minerals.upgrades.${MineralUpgradeType[type]}`));
   }
 
-  static async polishUpgrades(): Promise<Record<keyof typeof PolishUpgradeType, PolishUpgrade>> {
-    return Object.map(await rev.state<Record<keyof typeof PolishUpgradeType, PolishUpgradeData>>(`gameData.minerals.polishUpgrades`),
+  static async polishUpgrades(): Promise<Partial<Record<keyof typeof PolishUpgradeType, PolishUpgrade>>> {
+    return Object.map(await rev.state<Partial<Record<keyof typeof PolishUpgradeType, PolishUpgradeData>>>(`gameData.minerals.polishUpgrades`),
       (type, data) => [type, new PolishUpgrade(data)] as const);
   }
 
@@ -189,10 +189,17 @@ export class States {
 
 
 export type EternalChallengeData = {
+  KeyName: string;
   completeDiff: number;
+  curDiff: number;
+  goal: string; // BigDouble
   inChallenge: boolean;
   Unlocked: boolean;
   num: number;
+  penalty: string; // BigDouble
+  reward: string; // BigDouble
+  rewardPenaltyIT4: string; // BigDouble
+  startFrom: keyof typeof StartFromEnum;
 }
 
 
@@ -217,13 +224,13 @@ export type UnityZodiacData = {
   RangeOffset: number;
   Season: keyof typeof ZodiacSeason;
   hasPlanet: boolean;
-  level: string | number;
+  level: string; // BigDouble
   locked: boolean;
   planet: UnityPlanetData | null;
-  quality: string | number;
+  quality: string; // BigDouble
   rarity: keyof typeof ZodiacRarity;
-  rarityPlus: string | number;
-  score: string | number;
+  rarityPlus: string; // BigDouble
+  score: string; // BigDouble
   sign: keyof typeof ZodiacSign;
   stats: ZodiacStatData[];
 }
@@ -291,7 +298,7 @@ export class UnityZodiac {
 
 export type UnityPlanetData = {
   bonusType: keyof typeof PlanetStatType;
-  bonusValue: string | number;
+  bonusValue: string; // BigDouble
   type: keyof typeof Planet;
   unlocked: boolean;
 }
@@ -315,7 +322,7 @@ export class UnityPlanet {
 
 export type ZodiacStatData = {
   type: keyof typeof ZodiacStatType;
-  value: string | number;
+  value: string; // BigDouble
 }
 
 
@@ -332,9 +339,9 @@ export class ZodiacStat {
 
 
 export type SacriStatData = {
-  type: keyof typeof ZodiacStatType;
-  value: string | number;
-  score: string | number;
+  stat: keyof typeof ZodiacStatType;
+  value: string; // BigDouble
+  score: string; // BigDouble
   showable: boolean;
 }
 
@@ -345,9 +352,9 @@ export class SacriStat {
   score: BigNum;
   showable: boolean;
 
-  constructor({ type, value, score, showable }: SacriStatData) {
-    this.type = ZodiacStatType[type];
-    if (type == null) console.error(`sacri stat type ${type} is missing from the enum`);
+  constructor({ stat, value, score, showable }: SacriStatData) {
+    this.type = ZodiacStatType[stat];
+    if (stat == null) console.error(`sacri stat type ${stat} is missing from the enum`);
     this.value = new BigNum(value);
     this.score = new BigNum(score);
     this.showable = showable;
@@ -356,10 +363,10 @@ export class SacriStat {
 
 
 export type AttackLevelData = {
-  currentHP: string | number;
-  goldGain: string | number;
-  level: string | number;
-  maxHP: string | number;
+  currentHP: string; // BigDouble
+  goldGain: string; // BigDouble
+  level: string; // BigDouble
+  maxHP: string; // BigDouble
   unlocked: boolean;
 }
 
@@ -382,18 +389,18 @@ export class AttackLevel {
 
 
 export type AttackRelicData = {
-  ReqLevel: string | number;
-  amount: string | number;
-  baseCost: string | number;
-  buyAmount: string | number;
-  costInc: string | number;
-  effect: string | number;
-  effect_next: string | number;
-  num: string | number;
-  regainedLevelsEst: string | number;
-  sacriEffect: string | number;
-  sacriLevel: string | number;
-  totalCost: string | number;
+  ReqLevel: string; // BigDouble
+  amount: string; // BigDouble
+  baseCost: string; // BigDouble
+  buyAmount: string; // BigDouble
+  costInc: string; // BigDouble
+  effect: string; // BigDouble
+  effect_next: string; // BigDouble
+  num: number;
+  regainedLevelsEst: string; // BigDouble
+  sacriEffect: string; // BigDouble
+  sacriLevel: string; // BigDouble
+  totalCost: string; // BigDouble
   unlocked: boolean;
 }
 
@@ -446,15 +453,15 @@ export class AttackRelic {
 
 
 export type MineralsUpgradeData = {
-  buyAmount: string;
+  buyAmount: string; // BigDouble
   canBuy: boolean;
-  cost: string;
-  effect: string;
-  effectNext: string;
-  income: string;
-  level: string;
+  cost: string; // BigDouble
+  effect: string; // BigDouble
+  effectNext: string; // BigDouble
+  income: string; // BigDouble
+  level: string; // BigDouble
   Maxed: boolean;
-  maxLevel: string;
+  maxLevel: string; // BigDouble
   type: keyof typeof MineralUpgradeType;
   Unlocked: boolean;
 }
@@ -502,12 +509,13 @@ export class MineralUpgrade {
 
 
 export type CommonMineralData = {
+  Desc: string;
   Id: number;
-  income: string | number;
+  income: string; // BigDouble
   Name: string;
   KeyDesc: string;
   KeyName: string;
-  level: string | number;
+  level: string; // BigDouble
 }
 
 
@@ -538,12 +546,12 @@ export class CommonMineral {
 
 
 export type PolishUpgradeData = {
-  buyAmount: string;
+  buyAmount: string; // BigDouble
   CanBuy: boolean;
-  cost: string;
-  effect: string;
-  effectNext: string;
-  level: string;
+  cost: string; // BigDouble
+  effect: string; // BigDouble
+  effectNext: string; // BigDouble
+  level: string; // BigDouble
   milestones: Array<boolean>;
   type: keyof typeof PolishUpgradeType;
 }
@@ -582,79 +590,89 @@ export class PolishUpgrade {
 
 
 export enum ZodiacElement {
-  Fire,
-  Water,
-  Earth,
-  Wind,
+  Undefined = -1,
+  Fire = 0,
+  Earth = 1,
+  Wind = 2,
+  Water = 3,
+  Light = 4,
 }
 
 
 export enum ZodiacSeason {
-  Spring,
-  Summer,
-  Autumn,
-  Winter,
+  Spring = 0,
+  Summer = 1,
+  Autumn = 2,
+  Winter = 3,
+  Weather = 4,
 }
 
 
 export enum ZodiacSign {
-  Aries,
-  Taurus,
-  Gemini,
-  Cancer,
-  Leo,
-  Virgo,
-  Libra,
-  Scorpio,
-  Sagittarius,
-  Capricorn,
-  Aquarius,
-  Pisces,
+  Undefined = -1,
+  Aries = 0,
+  Taurus = 1,
+  Gemini = 2,
+  Cancer = 3,
+  Leo = 4,
+  Virgo = 5,
+  Libra = 6,
+  Scorpio = 7,
+  Sagittarius = 8,
+  Capricorn = 9,
+  Aquarius = 10,
+  Pisces = 11,
+  Multisign = 12,
 }
 
 
 export enum ZodiacRarity {
-  Garbage,
-  Common,
-  Uncommon,
-  Rare,
-  Epic,
-  Legendary,
-  Mythic,
-  Godly,
-  Divine,
-  Immortal,
+  Temperate = -1,
+  Garbage = 0,
+  Common = 1,
+  Uncommon = 2,
+  Rare = 3,
+  Epic = 4,
+  Legendary = 5,
+  Mythic = 6,
+  Godly = 7,
+  Divine = 8,
+  Immortal = 9,
+  Ethereal = 10,
+  Amazing = 11,
+  Prime = 12,
+  Rainbow = 13,
+  Galactic = 14,
+  Ultima = 15,
 }
 
 
 export enum ZodiacStatType {
-  MultsGain,
-  CommonExponent,
-  AscensionPower,
-  PromPower,
-  LapsSpeed,
-  SlowdownPower,
-
-  IPGain,
-  GenExponent,
-  MultPerBoughtGen,
-  InfinityGain,
-  StarBase,
-  StardustExponent,
-
-  LabMultPower,
-  SupernovaReq,
-  EPGain,
-  EternityGain,
-  DPGain,
-  FreeLabLevels,
-
-  GameSpeed,
-  LuckAdd,
-  Ach29Reward,
-  DTPCost,
-  CenterDTUEff,
-  ZodiacQualityMult,
+  Undefined = -1,
+  MultsGain = 0,
+  PromPower = 1,
+  CommonExponent = 2,
+  AscensionPower = 3,
+  LapsSpeed = 4,
+  SlowdownPower = 5,
+  IPGain = 6,
+  InfinityGain = 7,
+  GenExponent = 8,
+  MultPerBoughtGen = 9,
+  StarBase = 10,
+  StardustExponent = 11,
+  EternityGain = 12,
+  EPGain = 13,
+  LabMultPower = 14,
+  SupernovaReq = 15,
+  DPGain = 16,
+  FreeLabLevels = 17,
+  DTPCost = 18,
+  CenterDTUEff = 19,
+  Ach29Reward = 20,
+  GameSpeed = 21,
+  LuckAdd = 22,
+  ZodiacQualityMult = 23,
 }
 
 
@@ -729,4 +747,11 @@ export enum PolishUpgradeType {
   Spear = 2,
   Bow = 3,
   Knuckles = 4,
+}
+
+
+export enum StartFromEnum {
+  Manual = 0,
+  Automation = 1,
+  Macro = 2,
 }
