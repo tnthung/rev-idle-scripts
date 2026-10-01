@@ -365,7 +365,7 @@ async function mineralMaintenance() {
       const rawAffordableLevel = new BigNum(lastGainedGold.exponent - 107n).min(maxLevel);
 
       // Determine the target mineral level based on affordability and owned minerals
-      let level = minOwnedLevel;
+      let level = minOwnedLevel.min(rawAffordableLevel);
       if (rawAffordableLevel.sub(minOwnedLevel).gte(new BigNum(5))) {
         level = rawAffordableLevel;
 
