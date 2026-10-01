@@ -260,6 +260,10 @@ export class Action extends Function {
     .invokeSilent("scene:-12/VIEWMANAGER[0]/safe_area[0]/NOTIFY[3]/notify_default%28Clone%29[0]/btn_close[1]")
     .sleep(100);
 
+  static confirm = new Action()
+    .invokeSilent("scene:-12/VIEWMANAGER[0]/safe_area[0]/MESSAGES[1]/message%28Clone%29[0]/content[0]/panel[1]/width_limit[0]/height_fit[0]/panel[0]/ctn_buttons[3]/message_btn%28Clone%29[1]")
+    .sleep(100);
+
 
   static main = new Action()
     .invoke("scene:-148/CANVAS[0]/safe_area[0]/sidebar[2]/landscape[0]/tab_landscape_main[1]")
@@ -332,9 +336,6 @@ export class Action extends Function {
               load: new Action()
                 .invokeSilent("scene:-454/CANVAS[0]/safe_area[0]/front_views[3]/layer_1[0]/loadout_dtu[15]/content[0]/width_fit[1]/panel[0]/ctn_title[0]/btn_close[2]")
                 .invoke("scene:-148/CANVAS[0]/safe_area[0]/front_views[3]/layer_1[0]/loadout_dtu[15]/content[0]/width_fit[1]/panel[0]/scroll_view[4]/viewport[0]/content[0]/item_dtu_loadout%28Clone%29[0]/content[0]/ctn_actions[2]/btn_load[1]"),
-              confirmLoad: new Action()
-                .invokeSilent("scene:-12/VIEWMANAGER[0]/safe_area[0]/MESSAGES[1]/message%28Clone%29[0]/content[0]/panel[1]/width_limit[0]/height_fit[0]/panel[0]/ctn_buttons[3]/message_btn%28Clone%29[1]")
-                .sleep(100),
             }),
           C: new Action()
             .invoke("scene:-148/CANVAS[0]/safe_area[0]/views[1]/eternity[2]/content[0]/panel[1]/views[0]/dilation_tree[6]/content[0]/ctn_tree[1]/green_1[5]")

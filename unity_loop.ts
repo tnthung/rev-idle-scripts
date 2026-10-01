@@ -47,7 +47,7 @@ export async function afterLoad() {
   rev.resize(1725, 600);
   console.clear();
   Action.dismiss.loopDetached();
-  Action.eternity.dilationTree.loadout.confirmLoad.loopDetached();
+  Action.confirm.loopDetached();
   await loadConfig();
   UnityHistory.init();
 
