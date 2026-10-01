@@ -24,7 +24,7 @@ let lastLoadTime: number | undefined;
 let loadedExtensions: Map<string, Extension> = new Map();
 
 export default async function main() {
-  if (lastLoadTime && (Date.now() - lastLoadTime) >= 500) {
+  if (!lastLoadTime || (Date.now() - lastLoadTime) >= 500) {
     const extension = (await import("./main.ts")).EXTENSION_REGISTRY;
 
     // unload extensions that are no longer in the registry
