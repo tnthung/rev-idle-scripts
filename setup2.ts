@@ -167,13 +167,18 @@ async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnit
   }
 
   // Keep the production timeout, but do not label its partial window a full-ring sample.
-  const complete = mults.every((mult, i) => mult.gt(new BigNum(previous.mults[i])));
-  if (!complete)
+  if (
+    // if not every progress are 0, then at least 1 ring is not over 10rev/sec
+    !(await States.attackRevolutionProgressions()).every(p => p?.isZero) &&
+    // only check if the multipliers have not all increased in this case
+    !mults.every((mult, i) => mult.gt(new BigNum(previous.mults[i]))))
+  {
     // only continue waiting if the time elapsed since the level started is within the attack ETA cap
     if (ATTACK_SLOW_ETA_CAP_S.gte(new BigNum((now - previous.lastCheck) / 1000))) {
       slowAttack = true;
       return false;
     }
+  }
 
   // update last check timestamp
   const lastCheck = previous.lastCheck;

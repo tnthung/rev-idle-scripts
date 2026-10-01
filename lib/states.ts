@@ -139,6 +139,17 @@ export class States {
       : null);
   }
 
+  static async attackRevolutionProgressions() {
+    const indexes = [0, 1, 2, 3, 4];
+    const values = await rev.state(...indexes.flatMap(index => [
+      `gameData.attacks.revolutions.${index}.IsActive`,
+      `gameData.attacks.revolutions.${index}.progress`,
+    ])) as Readonly<Record<string, boolean | string>>;
+    return indexes.map(index => values[`gameData.attacks.revolutions.${index}.IsActive`]
+      ? new BigNum(values[`gameData.attacks.revolutions.${index}.progress`] as string)
+      : null);
+  }
+
   static async attackRevolutionCanBuy(n: number) {
     return Boolean(await rev.state<boolean>(`gameData.attacks.revolutions.${n}.CanPurchase`));
   }
