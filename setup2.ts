@@ -1,5 +1,5 @@
 // cspell:ignore Mult Mults loadouts
-import type { Config, ZodiacSnapshot } from "./unity_loop.ts";
+import type { Config, ZodiacSnapshot, UnityReportElementState } from "./unity_loop.ts";
 
 import {
   UnityHistory,
@@ -23,7 +23,7 @@ import {
 
 
 const ZODIAC_SPARE_MIN         = 3;
-const UNITY_LEVEL_CAP          = 110;
+const UNITY_LEVEL_CAP          = new BigNum(110);
 const ATTACK_CHECK_INTERVAL_MS = 500;
 const ZODIAC_QUALITY_MIN       = new BigNum(8000);
 const ATTACK_FAST_ETA_CAP_S    = new BigNum(30);
@@ -192,6 +192,8 @@ async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnit
 
   // shift to the next phase
   state.phase = state.phase === "build" ? "score" : "collect";
+  if (rev.ui.unityReport)
+    ((rev.ui.unityReport.states as UnityReportElementState).zodiacLoadout = state.phase);
   state.ready = false;
   delete state.sample;
   SetupState.setUnguarded(state);
@@ -241,6 +243,9 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
   if (!state || state.unities !== unities) {
     state = { unities, phase: "build", ready: false, queue: [] };
     SetupState.setUnguarded(state);
+
+    if (rev.ui.unityReport)
+      ((rev.ui.unityReport.states as UnityReportElementState).zodiacLoadout = state.phase);
   }
 
   if (!state.ready && !state.queue.length) {
@@ -333,7 +338,7 @@ async function mineralUpgradesToBuy(): Promise<MineralUpgradeType[]> {
 
 
 async function shouldPolishPrestige(elapsed: number): Promise<boolean> {
-  return elapsed >= 1800000 || Object.values(await States.commonMinerals())
+  return elapsed >= 60000 || Object.values(await States.commonMinerals())
     .some(mineral => mineral.level.gte(new BigNum(100)));
 }
 

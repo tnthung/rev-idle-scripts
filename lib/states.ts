@@ -77,7 +77,7 @@ export class States {
   }
 
   static async unityLevel() {
-    return await rev.state<number>("unityLevel");
+    return new BigNum(await rev.state<string | number>("unityLevel"));
   }
 
   static async unityZodiacInventory(): Promise<Record<string, UnityZodiac>> {
@@ -109,6 +109,10 @@ export class States {
 
   static async eternalChallenge(n: number) {
     return new EternalChallenge(await rev.state<EternalChallengeData>(`gameData.eternity.challenges.${n}`));
+  }
+
+  static async eternalChallengeCompletedCount() {
+    return await rev.state<number>("challengesCompletedCount");
   }
 
   static async nextUnityZodiacs(): Promise<[UnityZodiac, UnityZodiac, UnityZodiac, UnityZodiac]> {
