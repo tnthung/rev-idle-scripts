@@ -619,19 +619,17 @@ export class Action extends Function {
     })
     .extend({
       async upgradeRings() {
-        let so: ScreenOwnership | undefined;
+        let so: Promise<ScreenOwnership> | undefined;
 
-        i: for (let i=5; i>0; i--) while (true) {
-          if (!(await States.attackRevolutionCanBuy(i-1)))
-            continue i;
+        await Promise.all(new Array(5).fill(0).map(async (_, i) => {
+          while (await States.attackRevolutionCanBuy(i)) {
+            await (so ??= rev.screenOwnership("Upgrading attack ring"));
+            await Action.attack[`buy${i+1 as 1|2|3|4|5}`]().catch(() => {})
+            await Action.attack[`ascend${i+1 as 1|2|3|4|5}`]().catch(() => {})
+          }
+        }));
 
-          so ??= await rev.screenOwnership("Upgrading attack ring");
-          console.log(`Upgrading attack ring ${i}`)
-          await Action.attack[`buy${i as 1|2|3|4|5}`]();
-          await Action.attack[`ascend${i as 1|2|3|4|5}`]();
-        }
-
-        so?.release();
+        (await so)?.release();
       },
       async buyRelics(n: number[]) {
         let so: ScreenOwnership | undefined;
