@@ -622,7 +622,9 @@ export class Action extends Function {
         let so: Promise<ScreenOwnership> | undefined;
 
         await Promise.all(new Array(5).fill(0).map(async (_, i) => {
-          while (await States.attackRevolutionCanBuy(i)) {
+          while (true) {
+            const revolution = await States.attackRevolution(i);
+            if (!revolution.CanAscend && !revolution.CanPurchase) break;
             await (so ??= rev.screenOwnership("Upgrading attack ring"));
             await Action.attack[`buy${i+1 as 1|2|3|4|5}`]().catch(() => {})
             await Action.attack[`ascend${i+1 as 1|2|3|4|5}`]().catch(() => {})

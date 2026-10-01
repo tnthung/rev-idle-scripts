@@ -128,6 +128,15 @@ export class States {
     return new AttackLevel(await rev.state<AttackLevelData>("gameData.attacks.level"));
   }
 
+  static async attackRevolutions() {
+    return (await rev.state<AttacksRevolutionData[]>("gameData.attacks.revolutions"))
+      .map(data => new AttacksRevolution(data));
+  }
+
+  static async attackRevolution(n: number) {
+    return new AttacksRevolution(await rev.state<AttacksRevolutionData>(`gameData.attacks.revolutions.${n}`));
+  }
+
   static async attackRevolutionMults() {
     const indexes = [0, 1, 2, 3, 4];
     const values = await rev.state(...indexes.flatMap(index => [
@@ -213,7 +222,6 @@ export type EternalChallengeData = {
   startFrom: keyof typeof StartFromEnum;
 }
 
-
 export class EternalChallenge {
   challengeLevel: number;
   completeDiff: number;
@@ -245,7 +253,6 @@ export type UnityZodiacData = {
   sign: keyof typeof ZodiacSign;
   stats: ZodiacStatData[];
 }
-
 
 export class UnityZodiac {
   Element: ZodiacElement;
@@ -314,7 +321,6 @@ export type UnityPlanetData = {
   unlocked: boolean;
 }
 
-
 export class UnityPlanet {
   bonusType: PlanetStatType;
   bonusValue: BigNum;
@@ -336,7 +342,6 @@ export type ZodiacStatData = {
   value: string; // BigDouble
 }
 
-
 export class ZodiacStat {
   type: ZodiacStatType;
   value: BigNum;
@@ -355,7 +360,6 @@ export type SacriStatData = {
   score: string; // BigDouble
   showable: boolean;
 }
-
 
 export class SacriStat {
   type: ZodiacStatType;
@@ -380,7 +384,6 @@ export type AttackLevelData = {
   maxHP: string; // BigDouble
   unlocked: boolean;
 }
-
 
 export class AttackLevel {
   currentHP: BigNum;
@@ -414,7 +417,6 @@ export type AttackRelicData = {
   totalCost: string; // BigDouble
   unlocked: boolean;
 }
-
 
 export class AttackRelic {
   ReqLevel: BigNum;
@@ -477,7 +479,6 @@ export type MineralsUpgradeData = {
   Unlocked: boolean;
 }
 
-
 export class MineralUpgrade {
   buyAmount: BigNum;
   canBuy: boolean;
@@ -529,7 +530,6 @@ export type CommonMineralData = {
   level: string; // BigDouble
 }
 
-
 export class CommonMineral {
   Id: number;
   income: BigNum;
@@ -567,7 +567,6 @@ export type PolishUpgradeData = {
   type: keyof typeof PolishUpgradeType;
 }
 
-
 export class PolishUpgrade {
   buyAmount: BigNum;
   CanBuy: boolean;
@@ -596,6 +595,148 @@ export class PolishUpgrade {
     this.level = new BigNum(level);
     this.milestones = milestones;
     this.type = PolishUpgradeType[type];
+  }
+}
+
+
+export type AttacksRevolutionBuyableData = {
+  allCost: string; // BigDouble
+  amount: number;
+  baseCost: string; // BigDouble
+  buyAmount: number | "NaN" | "Infinity" | "-Infinity";
+  costInc: string; // BigDouble
+  maxAmount: number;
+  num: number;
+  spendable: boolean;
+  totalCost: string; // BigDouble
+};
+
+export class AttacksRevolutionBuyable {
+  allCost: BigNum;
+  amount: number;
+  baseCost: BigNum;
+  buyAmount: number | "NaN" | "Infinity" | "-Infinity";
+  costInc: BigNum;
+  maxAmount: number;
+  num: number;
+  spendable: boolean;
+  totalCost: BigNum;
+
+  constructor({
+    allCost,
+    amount,
+    baseCost,
+    buyAmount,
+    costInc,
+    maxAmount,
+    num,
+    spendable,
+    totalCost,
+  }: AttacksRevolutionBuyableData) {
+    this.allCost = new BigNum(allCost);
+    this.amount = amount;
+    this.baseCost = new BigNum(baseCost);
+    this.buyAmount = buyAmount;
+    this.costInc = new BigNum(costInc);
+    this.maxAmount = maxAmount;
+    this.num = num;
+    this.spendable = spendable;
+    this.totalCost = new BigNum(totalCost);
+  }
+}
+
+
+export type AttacksRevolutionData = {
+  amount: number | string;
+  ascCooldown: boolean;
+  ascendPower: string; // BigDouble
+  ascension: number | string;
+  baseSpeed: number | "NaN" | "Infinity" | "-Infinity";
+  CanAscend: boolean;
+  CanPurchase: boolean;
+  damage: string; // BigDouble
+  dmgBaseMult: string; // BigDouble
+  dmgBaseMults: Array<string>; // BigDouble
+  dmgInitMult: string; // BigDouble
+  got: number | "NaN" | "Infinity" | "-Infinity";
+  IsActive: boolean;
+  IsUnlocked: boolean;
+  mult: string; // BigDouble
+  multGain: string; // BigDouble
+  num: number;
+  progress: string; // BigDouble
+  speed: number | "NaN" | "Infinity" | "-Infinity";
+  speedNext: number | "NaN" | "Infinity" | "-Infinity";
+  thisBuyable: AttacksRevolutionBuyableData;
+};
+
+export class AttacksRevolution {
+  amount: number | string;
+  ascCooldown: boolean;
+  ascendPower: BigNum;
+  ascension: number | string;
+  baseSpeed: number | "NaN" | "Infinity" | "-Infinity";
+  CanAscend: boolean;
+  CanPurchase: boolean;
+  damage: BigNum;
+  dmgBaseMult: BigNum;
+  dmgBaseMults: Array<BigNum>;
+  dmgInitMult: BigNum;
+  got: number | "NaN" | "Infinity" | "-Infinity";
+  IsActive: boolean;
+  IsUnlocked: boolean;
+  mult: BigNum;
+  multGain: BigNum;
+  num: number;
+  progress: BigNum;
+  speed: number | "NaN" | "Infinity" | "-Infinity";
+  speedNext: number | "NaN" | "Infinity" | "-Infinity";
+  thisBuyable: AttacksRevolutionBuyable;
+
+  constructor({
+    amount,
+    ascCooldown,
+    ascendPower,
+    ascension,
+    baseSpeed,
+    CanAscend,
+    CanPurchase,
+    damage,
+    dmgBaseMult,
+    dmgBaseMults,
+    dmgInitMult,
+    got,
+    IsActive,
+    IsUnlocked,
+    mult,
+    multGain,
+    num,
+    progress,
+    speed,
+    speedNext,
+    thisBuyable,
+  }: AttacksRevolutionData) {
+    this.amount = amount;
+    this.ascCooldown = ascCooldown;
+    this.ascendPower = new BigNum(ascendPower);
+    this.ascension = ascension;
+    this.baseSpeed = baseSpeed;
+    this.CanAscend = CanAscend;
+    this.CanPurchase = CanPurchase;
+    this.damage = new BigNum(damage);
+    this.dmgBaseMult = new BigNum(dmgBaseMult);
+    this.dmgBaseMults = dmgBaseMults.map((v) => new BigNum(v));
+    this.dmgInitMult = new BigNum(dmgInitMult);
+    this.got = got;
+    this.IsActive = IsActive;
+    this.IsUnlocked = IsUnlocked;
+    this.mult = new BigNum(mult);
+    this.multGain = new BigNum(multGain);
+    this.num = num;
+    this.progress = new BigNum(progress);
+    this.speed = speed;
+    this.speedNext = speedNext;
+    this.thisBuyable = new AttacksRevolutionBuyable(thisBuyable);
   }
 }
 
