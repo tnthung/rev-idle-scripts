@@ -287,6 +287,57 @@ export function* range(start: number, end: number, step: number = 1) {
 }
 
 
+export class GlobalVar<T extends RevJsonValue> {
+  private key: string;
+  constructor(key: string) {
+    this.key = `__global_var_${key}__`;
+  }
+
+  async get(): Promise<T | undefined> {
+    using _ = await rev.mutex(this.key);
+    return rev.global[this.key] as T;
+  }
+
+  async getOrSet(defaultValue: T): Promise<T> {
+    using _ = await rev.mutex(this.key);
+    if (rev.global[this.key] === undefined)
+      rev.global[this.key] = defaultValue;
+    return rev.global[this.key] as T;
+  }
+
+  getUnguarded(): T | undefined {
+    return rev.global[this.key] as T;
+  }
+
+  async set(value: T): Promise<void> {
+    using _ = await rev.mutex(this.key);
+    rev.global[this.key] = value;
+  }
+
+  async setIfNotExists(value: T): Promise<void> {
+    using _ = await rev.mutex(this.key);
+    if (rev.global[this.key] === undefined)
+      rev.global[this.key] = value;
+  }
+
+  setUnguarded(value: T) {
+    rev.global[this.key] = value;
+  }
+
+  /** Remember to release the mutex guard after acquiring it. */
+  async acquire(): Promise<[MutexGuard, T]> {
+    const guard = await rev.mutex(this.key);
+    const value = rev.global[this.key] as T;
+    return [guard, value];
+  }
+
+  async update(fn: (value: T | undefined) => T): Promise<void> {
+    using _ = await rev.mutex(this.key);
+    rev.global[this.key] = fn(rev.global[this.key] as T);
+  }
+}
+
+
 export type Enumerate<N extends number, Acc extends number[] = []> =
   Acc['length'] extends N ? Acc[number] : Enumerate<N, [...Acc, Acc['length']]>;
 

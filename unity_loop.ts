@@ -11,9 +11,12 @@ import {
   UnityZodiac,
   MineralUpgradeType,
   PolishUpgradeType,
+  ZodiacRarity,
+  ZodiacSign,
 } from "./lib/states.ts";
 import {
   BigNum,
+  GlobalVar,
   pollFor,
   range,
   UnityDirection,
@@ -22,24 +25,26 @@ import {
 
 
 declare const rev: Readonly<Rev & {
-  global: {
-    unityStart: number;
-    pauseDuration: number;
-    pauseStart: number;
-    mineralStart: number;
+  ui: {
+    "mineralElapsedClock": RevUiElement;
   };
 }>;
 
 
+const PauseStart    = new GlobalVar<number>("pauseStart");
+const PauseDuration = new GlobalVar<number>("pauseDuration");
+const UnityStart    = new GlobalVar<number>("unityStart");
+const MineralStart  = new GlobalVar<number>("mineralStart");
+
+
 export async function beforePause() {
-  rev.global.pauseStart = Date.now();
+  PauseStart.set(Date.now());
 }
 
 
 export async function afterResume() {
-  rev.global.pauseDuration ??= 0;
-  rev.global.pauseDuration += rev.global.pauseStart
-    ? Date.now() - rev.global.pauseStart : 0;
+  const pauseStart = await PauseStart.get() ?? 0;
+  PauseDuration.update(value => (value ?? 0) + (Date.now()-pauseStart));
 }
 
 
@@ -50,6 +55,95 @@ export async function afterLoad() {
   Action.confirm.loopDetached();
   await loadConfig();
   UnityHistory.init();
+
+  { // setup mineral elapsed clock
+    await Action.unity.minerals.ensureCanSkip();
+    rev.ui("mineralElapsedClock", {
+      basedOn: "scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/background[0]/background[0]",
+      posX: 10,
+      posY: -10,
+      text: "Elapsed: -",
+    });
+    rev.daemon("mineralElapsedClock", async function() {
+      const MineralStart = new GlobalVar<number>("mineralStart");
+
+      while (true) {
+        try {
+          if (rev.ui.mineralElapsedClock) {
+            const mineralStartTime = await MineralStart.get() ?? Date.now();
+            const elapsed = Date.now() - mineralStartTime;
+            rev.ui.mineralElapsedClock.text = `Elapsed: ${(elapsed/1000).toFixed(1)}s`;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
+        await rev.sleep(100);
+      }
+    });
+  }
+
+  { // setup unity run report
+    const DEFAULT_REPORT = "Last Run: Loading...";
+
+    rev.ui("lastHistory", {
+      text: DEFAULT_REPORT,
+      font: "Consolas",
+      color: [0x44, 0x44, 0x44],
+      border: {
+        thickness: 2,
+        color: [0x33, 0x33, 0x33],
+      },
+      corner: {
+        radius: 4,
+      },
+      posX: 10,
+      posY: 10,
+      padding: {
+        thickness: 10,
+      },
+      states: {
+        expanded: true,
+        expandedText: DEFAULT_REPORT,
+        collapsedText: DEFAULT_REPORT,
+      },
+    }).setOnClick(function() {
+      const expanded = this.states.expanded === true;
+      this.states.expanded = !expanded;
+      this.text = !expanded
+        ? String(this.states.expandedText)
+        : String(this.states.collapsedText);
+    });
+    (async () => {
+      while (true) {
+        await rev.sleep(500);
+
+        try {
+          const element = rev.ui.lastHistory;
+          if (!element) continue;
+
+          const lastHistory = UnityHistory.getHistories(-1).at(-1);
+          if (!lastHistory) continue;
+
+          const { elapsedTime, attackLevelReached, goldGained, zodiacGot } = lastHistory;
+
+          const { sign, level, rarity, rarityPlus } = zodiacGot;
+          const expandedText = [
+            `Last Run (${(elapsedTime/1000).toFixed(1)}s):`,
+            `| Max Attack Level: ${attackLevelReached}`,
+            `| Gold Earned:      ${goldGained.toString(4)}`,
+            `| Zodiac Claimed:   ${ZodiacSign[sign]} ${level.toBigInt()}lvl ${ZodiacRarity[rarity]}${rarityPlus ? `+${rarityPlus}` : ""}`,
+          ].join("\n");
+          const collapsedText = `Last Run (${(elapsedTime/1000).toFixed(1)}s)`;
+
+          element.states = { ...element.states, expandedText, collapsedText };
+          element.text = element.states.expanded === true ? expandedText : collapsedText;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    })();
+  }
 
   (async () => {
     while (true) {
@@ -123,11 +217,11 @@ export default async function main() {
   await loadConfig();
 
   // get the elapsed time
-  rev.global.unityStart ??= Date.now();
-  rev.global.pauseDuration ??= 0;
+  await UnityStart.update(value => value ?? Date.now());
+  await PauseDuration.update(value => value ?? 0);
   const elapsed = (Date.now()
-    - rev.global.unityStart
-    - rev.global.pauseDuration);
+    - (await UnityStart.get())!
+    - (await PauseDuration.get())!);
 
   // unit if the config indicates so
   if (await config.shouldUnite?.(elapsed)) {
@@ -150,10 +244,9 @@ export default async function main() {
       return;
     }
 
-    history.updateUI();
     history.print();
-    history.pushGlobal();
-    rev.global.unityStart = Date.now();
+    await history.pushGlobal();
+    await UnityStart.set(Date.now());
   }
 
   // reset the game if the config indicates so
@@ -164,8 +257,8 @@ export default async function main() {
 
   // initialize states for new run
   if (await States.currentEP().then(v => v.isZero)) {
-    rev.global.pauseDuration = 0;
-    rev.global.pauseStart = 0;
+    await PauseDuration.set(0);
+    await PauseStart.set(0);
     states = {};
   }
 
@@ -260,8 +353,7 @@ async function attackMaintenance() {
 
 
 async function mineralMaintenance() {
-  if (!rev.global.mineralStart)
-    rev.global.mineralStart = Date.now();
+  await MineralStart.update(value => value ?? Date.now());
 
   { // Upgrade mineral upgrades
     let so: ScreenOwnership | undefined;
@@ -355,20 +447,12 @@ async function mineralMaintenance() {
   }
 
   { // Prestige minerals when config indicates so
-    const elapsed = Date.now() - (rev.global.mineralStart ?? 0);
-
-    (rev.ui.mineralElapsed ?? rev.ui("mineralElapsed", {
-      basedOn: "scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/background[0]/background[0]",
-      posX: 10,
-      posY: -10,
-      text: "Elapsed: -",
-    })).text = `Elapsed: ${Math.floor(elapsed / 1000)}s`;
-
+    const elapsed = Date.now() - (await MineralStart.get() ?? 0);
     if (await config.shouldPolishPrestige?.(elapsed)) {
       using _so = await rev.screenOwnership("Prestige minerals");
       await Action.unity.minerals.polish.prestige();
       await Action.unity.minerals.polish.close();
-      rev.global.mineralStart = Date.now();
+      await MineralStart.set(Date.now());
     }
   }
 

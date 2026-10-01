@@ -16,6 +16,7 @@ import {
 } from "./lib/states.ts";
 import {
   BigNum,
+  GlobalVar,
   UnityDirection,
   stringify,
 } from "./lib/utils.ts";
@@ -46,12 +47,9 @@ type SetupState = {
   };
 };
 
-declare const rev: Readonly<Rev & {
-  global: {
-    setup2?: SetupState;
-    pauseDuration?: number;
-  };
-}>;
+
+const PauseDuration = new GlobalVar<number>("pauseDuration");
+const SetupState    = new GlobalVar<SetupState>("setup2");
 
 
 export default {
@@ -113,7 +111,7 @@ async function shouldUniteByUnityLevel(): ReturnType<Exclude<Config["shouldUnite
 
 let slowAttack = false;
 async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnite"], undefined>> {
-  const state = rev.global.setup2;
+  const state = SetupState.getUnguarded();
   if (!state
     || !state.ready
     || state.queue.length
@@ -123,7 +121,7 @@ async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnit
   // Swapping zodiacs soft-resets Unity; allow the new build to recover first.
   if (await States.spentDTP() < 65 || await States.unityLevel() < UNITY_LEVEL_CAP) {
     delete state.sample;
-    rev.global.setup2 = state;
+    SetupState.setUnguarded(state);
     return false;
   }
 
@@ -137,7 +135,7 @@ async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnit
   if (previous && (now - previous.lastCheck) < ATTACK_CHECK_INTERVAL_MS)
     return false;
 
-  const pauseDuration = rev.global.pauseDuration ?? 0;
+  const pauseDuration = await PauseDuration.get() ?? 0;
   const [mults, attack] = await Promise.all([
     States.attackRevolutionMults() as Promise<BigNum[]>,
     States.attackLevel()]);
@@ -161,7 +159,7 @@ async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnit
     };
 
     slowAttack = false;
-    rev.global.setup2 = state;
+    SetupState.setUnguarded(state);
     return false;
   }
 
@@ -180,7 +178,7 @@ async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnit
   previous.lastCheck = now;
   previous.hp = attack.currentHP.toString();
   previous.mults = mults.map(mult => mult.toString());
-  rev.global.setup2 = state;
+  SetupState.setUnguarded(state);
 
   // calculate the damage dealt and the elapsed time since the last check
   const damage = new BigNum(lastHp).sub(attack.currentHP);
@@ -196,7 +194,7 @@ async function shouldUniteByZodiacPhase(): ReturnType<Exclude<Config["shouldUnit
   state.phase = state.phase === "build" ? "score" : "collect";
   state.ready = false;
   delete state.sample;
-  rev.global.setup2 = state;
+  SetupState.setUnguarded(state);
   console.log(`Switching zodiac loadout for ${state.phase}.`);
   return false;
 }
@@ -239,16 +237,16 @@ async function uniteWith(): ReturnType<Exclude<Config["uniteWith"], undefined>> 
 
 async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnType<Exclude<Config["nextZodiacAction"], undefined>> {
   const unities = (await States.unities()).toString();
-  let state = rev.global.setup2;
+  let state = SetupState.getUnguarded();
   if (!state || state.unities !== unities) {
     state = { unities, phase: "build", ready: false, queue: [] };
-    rev.global.setup2 = state;
+    SetupState.setUnguarded(state);
   }
 
   if (!state.ready && !state.queue.length) {
     state.plan = planLoadout({ inventory, planets }, state.phase);
     state.queue = [...state.plan];
-    rev.global.setup2 = state;
+    SetupState.setUnguarded(state);
   }
 
   // Protect the frozen plan as well as all three phases.
@@ -271,7 +269,7 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
     if (planets[target.planet] && zodiacKey(planets[target.planet]) === target.zodiac) {
       // rev.global returns JSON copies. Persist only confirmed queue progress.
       state.queue.shift();
-      rev.global.setup2 = state;
+      SetupState.setUnguarded(state);
       continue;
     }
 
@@ -289,14 +287,14 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
     // Clear the state
     console.error(`Queued zodiac for ${target.planet} is unavailable; clearing the queue.`);
     state.queue.length = 0;
-    rev.global.setup2 = state;
+    SetupState.setUnguarded(state);
     return null;
   }
 
   if (!state.ready) {
     state.ready = true;
     delete state.sample;
-    rev.global.setup2 = state;
+    SetupState.setUnguarded(state);
   }
 
   if (state.phase === "collect")
@@ -335,7 +333,7 @@ async function mineralUpgradesToBuy(): Promise<MineralUpgradeType[]> {
 
 
 async function shouldPolishPrestige(elapsed: number): Promise<boolean> {
-  return elapsed >= 180000 || Object.values(await States.commonMinerals())
+  return elapsed >= 1800000 || Object.values(await States.commonMinerals())
     .some(mineral => mineral.level.gte(new BigNum(100)));
 }
 

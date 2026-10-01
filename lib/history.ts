@@ -1,17 +1,13 @@
-import { UnityZodiac, ZodiacElement, ZodiacRarity, ZodiacSeason, ZodiacSign, ZodiacStatType } from "./states.ts";
-import { BigNum } from "./utils.ts";
+import { UnityZodiac, UnityZodiacData, ZodiacElement, ZodiacRarity, ZodiacSeason, ZodiacSign, ZodiacStatType } from "./states.ts";
+import { BigNum, GlobalVar } from "./utils.ts";
 
 
-declare const rev: Readonly<Rev & {
-  global: {
-    unityHistories?: {
-      elapsedTime: number;
-      goldGained: string;
-      attackLevelReached: number;
-      zodiacGot: ConstructorParameters<typeof UnityZodiac>[0];
-    }[];
-  };
-}>;
+const UnityHistories = new GlobalVar<{
+  elapsedTime: number;
+  goldGained: string;
+  attackLevelReached: number;
+  zodiacGot: UnityZodiacData,
+}[]>("unityHistories");
 
 
 const MAX_HISTORY: number = 20;
@@ -26,33 +22,8 @@ export class UnityHistory {
     public zodiacGot:          UnityZodiac
   ) {}
 
-  static init() {
-    UnityHistory.ensureHistories();
-
-    rev.ui("lastHistory", {
-      text: "Last Run: Loading...",
-      font: "Consolas",
-      color: [0x44, 0x44, 0x44],
-      border: {
-        thickness: 2,
-        color: [0x33, 0x33, 0x33],
-      },
-      corner: {
-        radius: 4,
-      },
-      posX: 10,
-      posY: 10,
-      padding: {
-        thickness: 10,
-      },
-      states: { expanded: true, expandedText: "Last Run: Loading...", collapsedText: "Last Run: Loading..." },
-    }).setOnClick(function() {
-      const expanded = this.states.expanded === true;
-      this.states.expanded = !expanded;
-      this.text = !expanded ? String(this.states.expandedText) : String(this.states.collapsedText);
-    });
-
-    histories?.at(-1)?.updateUI();
+  static async init() {
+    histories = await this.fromGlobal();
   }
 
   print() {
@@ -79,47 +50,25 @@ export class UnityHistory {
       ].join("\n"));
   }
 
-  updateUI() {
-    const { sign, level, rarity, rarityPlus } = this.zodiacGot;
-    const expandedText = [
-      `Last Run (${(this.elapsedTime/1000).toFixed(1)}s):`,
-      `| Max Attack Level: ${this.attackLevelReached}`,
-      `| Gold Earned:      ${this.goldGained.toString(4)}`,
-      `| Zodiac Claimed:   ${ZodiacSign[sign]} ${level.toBigInt()}lvl ${ZodiacRarity[rarity]}${rarityPlus ? `+${rarityPlus}` : ""}`,
-    ].join("\n");
-    const collapsedText = `Last Run (${(this.elapsedTime/1000).toFixed(1)}s)`;
-    const element = rev.ui.lastHistory;
-    if (!element) return;
-    element.states = { ...element.states, expandedText, collapsedText };
-    element.text = element.states.expanded === true ? expandedText : collapsedText;
-  }
-
   static getHistories(n?: number) {
-    this.ensureHistories();
     return histories!.slice(- (n ?? histories!.length));
   }
 
-  private static ensureHistories() {
-    if (histories !== null) return true;
-    histories = this.fromGlobal();
-    return true;
+  private static async fromGlobal() {
+    return (await UnityHistories.getOrSet([]))
+      .map(history => new UnityHistory(
+        history.elapsedTime,
+        new BigNum(history.goldGained),
+        history.attackLevelReached,
+        new UnityZodiac(history.zodiacGot)));
   }
 
-  private static fromGlobal() {
-    return (rev.global.unityHistories ?? []).map(history => new UnityHistory(
-      history.elapsedTime,
-      new BigNum(history.goldGained),
-      history.attackLevelReached,
-      new UnityZodiac(history.zodiacGot)));
-  }
-
-  pushGlobal() {
-    UnityHistory.ensureHistories();
+  async pushGlobal() {
     histories!.push(this);
     if (histories!.length > MAX_HISTORY)
       histories!.shift();
 
-    rev.global.unityHistories = histories?.map(({ elapsedTime, goldGained, attackLevelReached, zodiacGot }) => ({
+    UnityHistories.set(histories?.map(({ elapsedTime, goldGained, attackLevelReached, zodiacGot }) => ({
       elapsedTime,
       goldGained: goldGained.toString(),
       attackLevelReached,
@@ -142,12 +91,12 @@ export class UnityHistory {
           value: stat.value.toString(),
         })),
       },
-    })) ?? [];
+    })) ?? []);
   }
 
-  static clearGlobal() {
+  static async clearGlobal() {
     histories = [];
-    rev.global.unityHistories = [];
+    await UnityHistories.set([]);
   }
 
   static last10AverageZodiacRarity() {
