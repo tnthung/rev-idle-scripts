@@ -64,7 +64,7 @@ export async function afterLoad() {
     rev.ui("mineralElapsedClock", {
       basedOn: "scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/background[0]/background[0]",
       posX: 10,
-      posY: -10,
+      posY: -70,
       text: "Elapsed: -",
     });
 
@@ -337,6 +337,7 @@ async function attackMaintenance() {
 
 async function mineralMaintenance() {
   await MineralStart.update(value => value ?? Date.now());
+  await Action.unity.minerals.refine.close();
 
   { // Upgrade mineral upgrades
     let so: ScreenOwnership | undefined;

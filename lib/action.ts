@@ -1,4 +1,4 @@
-// cspell:ignore scrollview eternate VIEWMANAGER topbar enchancing buyables Mult
+// cspell:ignore scrollview eternate VIEWMANAGER topbar enchancing buyables Mult subviews
 import { States, Planet } from "./states.ts";
 
 
@@ -583,7 +583,21 @@ export class Action extends Function {
                   .invoke("scene:-552/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/subviews[1]/polish[0]/content[0]/width_fit[1]/panel[0]/btn_close[3]")
                   .catch(() => {});
               }
+            }),
+          refine: new Action()
+            .invoke("scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/btn_refine[3]")
+            .subLevel({
+              prestige: new Action()
+                .invoke("scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/refine[1]/ctn_right[2]/btn_ref_prestige[1]")
+                .invoke("scene:-12/VIEWMANAGER[0]/safe_area[0]/MESSAGES[1]/message%28Clone%29[0]/content[0]/panel[1]/width_limit[0]/height_fit[0]/panel[0]/ctn_buttons[3]/message_btn%28Clone%29[1]"),
             })
+            .extend({
+              async close() {
+                await rev
+                  .invoke("scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/refine[1]/btn_close[3]")
+                  .catch(() => {});
+              },
+            }),
         })
         .extend({
           async setMineralLevel(level: string) {

@@ -23,6 +23,7 @@ import {
 import type {
   UnityReportElementState
 } from "./unity_loop_helper.ts";
+import { Action } from "./lib/action.ts";
 
 
 const ZODIAC_SPARE_MIN         = 3;
@@ -346,8 +347,15 @@ async function mineralUpgradesToBuy(): Promise<MineralUpgradeType[]> {
 
 
 async function shouldPolishPrestige(elapsed: number): Promise<boolean> {
-  return Object.values(await States.commonMinerals())
-    .some(mineral => mineral.level.gte(new BigNum(100)));
+  const maxLevel = BigNum.max(...Object.values(await States.commonMinerals()).map(mineral => mineral.level));
+  if (maxLevel.gte(new BigNum(74))) {
+    await Action.unity.minerals.refine.prestige();
+    await Action.unity.minerals.refine.close();
+    await rev.sleep(100);
+    return true;
+  }
+
+  return elapsed > 180000;
 }
 
 
