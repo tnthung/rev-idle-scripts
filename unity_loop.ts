@@ -166,7 +166,7 @@ export type ZodiacAction =
 
 export type ZodiacSnapshot = {
   inventory: Record<string, UnityZodiac>;
-  planets: Record<keyof typeof Planet, UnityZodiac>;
+  planets:   Partial<Record<keyof typeof Planet, UnityZodiac>>;
 };
 
 export type Config = {

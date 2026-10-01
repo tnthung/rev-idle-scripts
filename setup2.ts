@@ -274,7 +274,7 @@ async function nextZodiacAction({ inventory, planets }: ZodiacSnapshot): ReturnT
 
   while (state.queue.length) {
     const target = state.queue[0];
-    if (planets[target.planet] && zodiacKey(planets[target.planet]) === target.zodiac) {
+    if (planets[target.planet] && zodiacKey(planets[target.planet]!) === target.zodiac) {
       // rev.global returns JSON copies. Persist only confirmed queue progress.
       state.queue.shift();
       SetupState.setUnguarded(state);
@@ -374,7 +374,7 @@ export function planLoadout({ inventory, planets }: ZodiacSnapshot, phase: Setup
   for (const planet of (Object.keys(planets) as (keyof typeof planets)[])
     .sort((a, b) => Number(special[b] != null) - Number(special[a] != null) || Planet[a] - Planet[b]))
   {
-    if (planets[planet].locked) {
+    if (planets[planet]?.locked) {
       loadout.push({ planet, zodiac: zodiacKey(planets[planet]) });
       continue;
     }

@@ -89,7 +89,7 @@ export class UnityHistory {
             planet: zodiacGot.planet ? { ...zodiacGot.planet } : null,
             quality: zodiacGot.quality.toString(),
             rarity: ZodiacRarity[zodiacGot.rarity] as keyof typeof ZodiacRarity,
-            rarityPlus: zodiacGot.rarityPlus,
+            rarityPlus: zodiacGot.rarityPlus.toString(),
             score: zodiacGot.score.toString(),
             sign: ZodiacSign[zodiacGot.sign] as keyof typeof ZodiacSign,
             stats: zodiacGot.stats.map(stat => ({
