@@ -53,7 +53,6 @@ export async function afterLoad() {
 
   (async () => {
     while (true) {
-      await rev.ensureRunning();
       try { await zodiacMaintenance(); }
       catch (e) { console.error(e); }
       await rev.sleep(1000);
@@ -62,7 +61,6 @@ export async function afterLoad() {
 
   (async () => {
     while (true) {
-      await rev.ensureRunning();
       try { await attackMaintenance(); }
       catch (e) { console.error(e); }
       await rev.sleep(1000);
@@ -71,7 +69,6 @@ export async function afterLoad() {
 
   (async () => {
     while (true) {
-      await rev.ensureRunning();
       try { await mineralMaintenance(); }
       catch (e) { console.error(e); }
       await rev.sleep(1000);
@@ -190,14 +187,13 @@ async function zodiacMaintenance() {
 
   try {
     while (true) {
-      await rev.ensureRunning();
       const action = await config.nextZodiacAction?.({
         inventory: await States.unityZodiacInventory(),
         planets:   await States.planetZodiacInventory(),
       });
 
       if (!action) break;
-      so ??= await rev.screenOwnership();
+      so ??= await rev.screenOwnership("Zodiac maintenance");
       await execute(action);
     }
   } finally {
@@ -255,39 +251,36 @@ async function attackMaintenance() {
   const relicsToBuy = (await config.relicsToBuy?.() ?? [])[Symbol.iterator]();
 
   while (true) {
-    await rev.ensureRunning();
     await Action.attack.upgradeRings();
     const nextRelic = relicsToBuy.next();
     if (nextRelic.done) break;
-    await rev.ensureRunning();
     await Action.attack.buyRelics([nextRelic.value]);
   }
 }
 
 
 async function mineralMaintenance() {
-  let so: ScreenOwnership | undefined;
-
   if (!rev.global.mineralStart)
     rev.global.mineralStart = Date.now();
 
   { // Upgrade mineral upgrades
-    for (const type of await config.mineralUpgradesToBuy?.() ?? []) {
-      await rev.ensureRunning();
+    let so: ScreenOwnership | undefined;
+
+    for (const type of await config.mineralUpgradesToBuy?.() ?? [])
       if ((await States.mineralUpgrade(type)).canBuy) {
-        so ??= await rev.screenOwnership();
+        so ??= await rev.screenOwnership("Upgrading mineral upgrades");
         const key = MineralUpgradeType[type] as keyof typeof MineralUpgradeType;
         await Action.unity.minerals[`upgrade${key}`]();
         await rev.sleep(100);
       }
-    }
+
+    so?.release();
   }
 
   { // Delete minerals too weak and update mineral level based on last gained gold and common minerals
-    await rev.ensureRunning();
     const lastGainedGold = UnityHistory.getHistories(1).at(0)?.goldGained;
     const commonMinerals = Object.entries(await States.commonMinerals());
-    updateLvl: if (lastGainedGold) {
+    if (lastGainedGold) {
       const curLevel = await States.currentMineralLevel();
       const maxLevel = await States.maxMineralLevel();
       const minOwnedLevel = commonMinerals.length
@@ -309,16 +302,16 @@ async function mineralMaintenance() {
         }
       }
 
-      if (curLevel.eq(level)) break updateLvl;
-      so ??= await rev.screenOwnership();
-      await Action.unity.minerals.setMineralLevel(level.toBigInt().toString());
-      await rev.sleep(100);
+      if (curLevel.neq(level)) {
+        console.log(`Setting mineral level to ${level.toInt()}`);
+        using _so = await rev.screenOwnership("Setting mineral level");
+        await Action.unity.minerals.setMineralLevel(level.toBigInt().toString());
+        await rev.sleep(100);
+      }
     }
   }
 
   spawn: { // Try to spawn
-    await rev.ensureRunning();
-
     const [gold, lvl, cur] = await Promise.all([
       States.currentGold(),
       States.currentMineralLevel(),
@@ -329,14 +322,12 @@ async function mineralMaintenance() {
     if (gold.exponent - cur.exponent < 3n)
       break spawn;
 
-    so ??= await rev.screenOwnership();
+    using _so = await rev.screenOwnership("Spawning mineral");
     console.log(`Spawning mineral level ${lvl.toInt()} at ${new Date().toISOString()}`);
     await Action.unity.minerals.spawn();
   }
 
   merge: { // Try to merge minerals
-    await rev.ensureRunning();
-
     let canMerge = false;
 
     const buckets = {} as Record<string, number[]>;
@@ -344,9 +335,11 @@ async function mineralMaintenance() {
       canMerge ||= (buckets[mineral.level.toInt()] ??= []).push(Number(slot)) >= 2;
     if (!canMerge) break merge;
 
-    so ??= await rev.screenOwnership();
+    let so: ScreenOwnership | undefined;
 
     while (canMerge) {
+      so ??= await rev.screenOwnership("Merging minerals");
+
       for (const [level, slots] of Object.entries(buckets))
         if (slots.length >= 2) {
           await Action.unity.minerals.merge(slots[0], slots[1]);
@@ -357,10 +350,11 @@ async function mineralMaintenance() {
 
       canMerge = Object.values(buckets).some(slots => slots.length >= 2);
     }
+
+    so?.release();
   }
 
   { // Prestige minerals when config indicates so
-    await rev.ensureRunning();
     const elapsed = Date.now() - (rev.global.mineralStart ?? 0);
 
     (rev.ui.mineralElapsed ?? rev.ui("mineralElapsed", {
@@ -371,7 +365,7 @@ async function mineralMaintenance() {
     })).text = `Elapsed: ${Math.floor(elapsed / 1000)}s`;
 
     if (await config.shouldPolishPrestige?.(elapsed)) {
-      so ??= await rev.screenOwnership();
+      using _so = await rev.screenOwnership("Prestige minerals");
       await Action.unity.minerals.polish.prestige();
       await Action.unity.minerals.polish.close();
       rev.global.mineralStart = Date.now();
@@ -379,21 +373,20 @@ async function mineralMaintenance() {
   }
 
   { // Purchase weapons
-    await rev.ensureRunning();
+    let so: ScreenOwnership | undefined;
 
-    for (const type of await config.weaponsToBuy?.() ?? []) {
+    for (const type of await config.weaponsToBuy?.() ?? [])
       if ((await States.polishUpgrade(type)).CanBuy) {
-        so ??= await rev.screenOwnership();
+        so ??= await rev.screenOwnership("Purchasing weapons");
         const key = PolishUpgradeType[type] as keyof typeof PolishUpgradeType;
         await Action.unity.minerals.polish[key].purchase();
         await rev.sleep(100);
       }
-    }
 
     await Action.unity.minerals.polish.close();
-  }
 
-  so?.release();
+    so?.release();
+  }
 }
 
 
@@ -420,14 +413,12 @@ async function bootstrapEternity() {
 
   // claim IP twice to bootstrap infinity
   for (const _ of range(0, 2)) {
-    await rev.ensureRunning();
     await pollFor(() => States.nextIP().then(v => v.exponent > 300n));
     await Action.main.claimIP();
   }
 
   // claim EP four times to bootstrap eternity
   for (const _ of range(0, 4)) {
-    await rev.ensureRunning();
     await rev.sleep(500);
     await Action.main.claimEP();
   }
@@ -443,8 +434,6 @@ async function finishEternalChallenge() {
   let allComplete = true;
 
   for (const level of range(0, 10)) while (true) {
-    await rev.ensureRunning();
-
     // skip challenges that finishes all 5 levels
     const ec = await States.eternalChallenge(level);
     if (ec.completeDiff >= 5) break;
@@ -549,7 +538,6 @@ async function finishDTP40Loadout() {
 
   // prioritize applying the highest stage that is not yet finished
   for (const stage of DT_STAGES.reverse()) {
-    await rev.ensureRunning();
     if (stage.dtp > totalDTP || await stage.finished()) continue;
     await stage.loadout.apply();
     await pollFor(async () => await stage.finished(), 50, 10000);

@@ -172,12 +172,8 @@ export class Action extends Function {
   }
 
   loopDetached() {
-    (async () => {
-      while (true) {
-        await rev.ensureRunning();
-        await this.execute().catch(console.error);
-      }
-    })().catch(console.error);
+    (async () => { while (true) await this.execute().catch(console.error); })()
+      .catch(console.error);
   }
 
   press(key: string, delayMs: number = 10) {
@@ -628,7 +624,7 @@ export class Action extends Function {
           if (!(await States.attackRevolutionCanBuy(i-1)))
             continue i;
 
-          so ??= await rev.screenOwnership();
+          so ??= await rev.screenOwnership("Upgrading attack ring");
           console.log(`Upgrading attack ring ${i}`)
           await Action.attack[`buy${i as 1|2|3|4|5}`]();
           await Action.attack[`ascend${i as 1|2|3|4|5}`]();
@@ -655,7 +651,7 @@ export class Action extends Function {
               continue i;
             }
 
-            so ??= await rev.screenOwnership();
+            so ??= await rev.screenOwnership("Buying relic");
             console.log(`Buying relic ${index+1}`)
             await Action.unity.relic.buy(index);
             first = false;
