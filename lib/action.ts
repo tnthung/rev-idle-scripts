@@ -250,9 +250,9 @@ export class Action extends Function {
     return this as this & M;
   }
 
-  ensureCanSkip() {
+  async ensureCanSkip() {
     if (!this.canSkip)
-      this.execute(true);
+      await this.execute(true);
   }
 
 
