@@ -530,8 +530,9 @@ export class Action extends Function {
         }),
       minerals: new Action()
         .invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/tab_menu[1]/tab_minerals[3]")
+        .invokeSilent("scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/refine[1]/btn_close[3]")
         .subLevel({
-          spawn: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_spawn[1]/ctn_spawn_actions[1]/btn_spawn[3]"),
+          spawnCommon: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_spawn[1]/ctn_spawn_actions[1]/btn_spawn[3]"),
           upgradeMaxLevel: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_0[0]/content[0]/ctn_upgrade[1]", true),
           upgradeGridHeight: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_1[1]/content[0]/ctn_upgrade[1]", true),
           upgradeGridWidth: new Action().invoke("scene:-498/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_upgrades[5]/scroll_view[0]/viewport[0]/content[0]/item_mineral_upgrade_2[2]/content[0]/ctn_upgrade[1]", true),

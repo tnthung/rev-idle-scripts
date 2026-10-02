@@ -324,20 +324,12 @@ async function zodiacMaintenance() {
 
 
 async function attackMaintenance() {
-  const relicsToBuy = (await config.relicsToBuy?.() ?? [])[Symbol.iterator]();
-
-  while (true) {
-    await Action.attack.upgradeRings();
-    const nextRelic = relicsToBuy.next();
-    if (nextRelic.done) break;
-    await Action.attack.buyRelics([nextRelic.value]);
-  }
+  await Action.attack.buyRelics(await config.relicsToBuy?.() ?? []);
 }
 
 
 async function mineralMaintenance() {
   await MineralStart.update(value => value ?? Date.now());
-  await Action.unity.minerals.refine.close();
 
   { // Upgrade mineral upgrades
     let so: ScreenOwnership | undefined;
@@ -400,7 +392,7 @@ async function mineralMaintenance() {
 
     using _so = await rev.screenOwnership("Spawning mineral");
     console.log(`Spawning mineral level ${lvl.toInt()} at ${new Date().toISOString()}`);
-    await Action.unity.minerals.spawn();
+    await Action.unity.minerals.spawnCommon();
   }
 
   merge: { // Try to merge minerals
