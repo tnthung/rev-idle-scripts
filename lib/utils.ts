@@ -350,6 +350,13 @@ export class GlobalVar<T extends RevJsonValue> {
 }
 
 
+export async function screenScope(label: string, fn: (so: () => Promise<ScreenOwnership>) => Promise<void>) {
+  let so: Promise<ScreenOwnership> | undefined;
+  try { await fn(async () => so ??= rev.screenOwnership(label)); }
+  finally { (await so)?.release(); }
+}
+
+
 export type Enumerate<N extends number, Acc extends number[] = []> =
   Acc['length'] extends N ? Acc[number] : Enumerate<N, [...Acc, Acc['length']]>;
 
