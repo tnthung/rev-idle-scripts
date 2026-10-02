@@ -139,7 +139,9 @@ export class BigNum {
   get isNeg():    boolean { return this.man < 0; }
   get isPos():    boolean { return !this.isNeg; }
 
-  cmp(other: BigNum): -1 | 0 | 1 {
+  cmp(other: BigNum | number | bigint): -1 | 0 | 1 {
+    other = new BigNum(other);
+
     if (this.isZero || other.isZero || this.isNeg !== other.isNeg)
       return Math.sign(this.man - other.man) as -1 | 0 | 1;
 
@@ -148,15 +150,15 @@ export class BigNum {
     return Math.sign(this.man - other.man) as -1 | 0 | 1;
   }
 
-  lt (other: BigNum) { return this.cmp(other) <   0; }
-  lte(other: BigNum) { return this.cmp(other) <=  0; }
-  gt (other: BigNum) { return this.cmp(other) >   0; }
-  gte(other: BigNum) { return this.cmp(other) >=  0; }
-  eq (other: BigNum) { return this.cmp(other) === 0; }
-  neq(other: BigNum) { return this.cmp(other) !== 0; }
+  lt (other: BigNum | number | bigint) { return this.cmp(other) <   0; }
+  lte(other: BigNum | number | bigint) { return this.cmp(other) <=  0; }
+  gt (other: BigNum | number | bigint) { return this.cmp(other) >   0; }
+  gte(other: BigNum | number | bigint) { return this.cmp(other) >=  0; }
+  eq (other: BigNum | number | bigint) { return this.cmp(other) === 0; }
+  neq(other: BigNum | number | bigint) { return this.cmp(other) !== 0; }
 
-  max(other: BigNum) { return this.cmp(other) >= 0 ? new BigNum(this) : new BigNum(other); }
-  min(other: BigNum) { return this.cmp(other) <= 0 ? new BigNum(this) : new BigNum(other); }
+  max(other: BigNum | number | bigint) { return this.cmp(other) >= 0 ? new BigNum(this) : new BigNum(other); }
+  min(other: BigNum | number | bigint) { return this.cmp(other) <= 0 ? new BigNum(this) : new BigNum(other); }
 
   static max(...values: BigNum[]) {
     if (values.length === 0) throw new Error("No values provided");
@@ -172,7 +174,9 @@ export class BigNum {
   neg()  { return this.fromParts(-this.man, this.exp); }
   abs()  { return this.fromParts(Math.abs(this.man), this.exp); }
 
-  add(other: BigNum) {
+  add(other: BigNum | number | bigint) {
+    other = new BigNum(other);
+
     if (this.isZero) return new BigNum(other);
     if (other.isZero) return new BigNum(this);
 
@@ -192,7 +196,9 @@ export class BigNum {
       baseE);
   }
 
-  sub(other: BigNum) {
+  sub(other: BigNum | number | bigint) {
+    other = new BigNum(other);
+
     if (this.isZero) return other.neg();
     if (other.isZero) return new BigNum(this);
 
@@ -212,13 +218,15 @@ export class BigNum {
       baseE);
   }
 
-  mul(other: BigNum) {
+  mul(other: BigNum | number | bigint) {
+    other = new BigNum(other);
     return this.fromParts(
       this.man * other.man,
       this.exp + other.exp);
   }
 
-  div(other: BigNum) {
+  div(other: BigNum | number | bigint) {
+    other = new BigNum(other);
     return this.fromParts(
       this.man / other.man,
       this.exp - other.exp);
