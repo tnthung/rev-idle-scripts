@@ -15,7 +15,7 @@ import {
   UnityZodiac,
   MineralUpgradeType,
   PolishUpgradeType,
-} from "./lib/states.ts";
+} from "./lib/states_unity.ts";
 import {
   BigNum,
   GlobalVar,

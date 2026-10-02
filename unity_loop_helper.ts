@@ -1,5 +1,5 @@
 import { UnityHistory } from "./lib/history.ts";
-import { States, ZodiacRarity, ZodiacSign } from "./lib/states.ts";
+import { States, ZodiacRarity, ZodiacSign } from "./lib/states_unity.ts";
 import { GlobalVar } from "./lib/utils.ts";
 
 

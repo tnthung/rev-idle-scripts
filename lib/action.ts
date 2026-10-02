@@ -1,5 +1,5 @@
 // cspell:ignore scrollview eternate VIEWMANAGER topbar enchancing buyables Mult subviews
-import { States, Planet } from "./states.ts";
+import { States, Planet } from "./states_unity.ts";
 
 
 type ActionStep = {
@@ -640,8 +640,8 @@ export class Action extends Function {
             const revolution = await States.attackRevolution(i);
             if (!revolution.CanAscend && !revolution.CanPurchase) break;
             await (so ??= rev.screenOwnership("Upgrading attack ring"));
-            await Action.attack[`buy${i+1 as 1|2|3|4|5}`]().catch(() => {})
-            await Action.attack[`ascend${i+1 as 1|2|3|4|5}`]().catch(() => {})
+            // await Action.attack[`buy${i+1 as 1|2|3|4|5}`]().catch(() => {})
+            await Action.attack[`ascend${i+1 as 1|2|3|4|5}`]().catch(() => {});
           }
         }));
 

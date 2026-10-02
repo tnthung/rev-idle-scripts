@@ -1,5 +1,5 @@
 import { Action } from "./action.ts";
-import { States } from "./states.ts";
+import { States } from "./states_unity.ts";
 
 
 export class DilationTree {

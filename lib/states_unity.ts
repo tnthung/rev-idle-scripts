@@ -1,5 +1,211 @@
-// cspell:ignore eters Mult Mults sacri showable infs
+// cspell:ignore eters Mult Mults sacri showable
 import { BigNum } from "./utils.ts";
+
+
+export class States {
+  static async unlockedAchievements() {
+    // The save uses zero-based IDs; expose the achievement numbers shown in game.
+    return new Set((await rev.state<number[]>("gameData.unlockedAch")).map(id => id + 1));
+  }
+
+  static async infinities() {
+    return new BigNum(await rev.state<string>("gameData.infinity.infs"));
+  }
+
+  static async eternities() {
+    return new BigNum(await rev.state<string>("gameData.eternity.eters"));
+  }
+
+  static async unities() {
+    return new BigNum(await rev.state<string>("gameData.unity.unities"));
+  }
+
+  static async currentIP() {
+    return new BigNum(await rev.state<string>("IP"));
+  }
+
+  static async currentEP() {
+    return new BigNum(await rev.state<string>("EP"));
+  }
+
+  static async currentDP() {
+    return new BigNum(await rev.state<string>("gameData.eternity.DP"));
+  }
+
+  static async currentGold() {
+    return new BigNum(await rev.state<string>("gameData.attacks.gold"));
+  }
+
+  static async nextIP() {
+    return new BigNum(await rev.state<string>("nextIP"));
+  }
+
+  static async nextEP() {
+    return new BigNum(await rev.state<string>("nextEP"));
+  }
+
+  static async nextGold() {
+    return new BigNum(await rev.state<string>("gameData.attacks.goldOnUnity"));
+  }
+
+  static async supernovaLevel() {
+    return await rev.state<number>("gameData.eternity.supernovaLv");
+  }
+
+  static async totalAP() {
+    return new BigNum(await rev.state<string>("gameData.eternity.APbought"));
+  }
+
+  static async DilationMaxScore() {
+    return new BigNum(await rev.state<string>("dilationMaxScore"));
+  }
+
+  static async inDilation() {
+    return await rev.state<boolean>("gameData.eternity.inDilation");
+  }
+
+  static async totalDTP() {
+    return await rev.state<number>("DTP");
+  }
+
+  static async unusedDTP() {
+    return await rev.state<number>("dtpFree");
+  }
+
+  static async spentDTP() {
+    return await rev.state<number>("dtpSpent");
+  }
+
+  static async unityLevel() {
+    return new BigNum(await rev.state<string>("unityLevel"));
+  }
+
+  static async unityZodiacInventory(): Promise<Record<string, UnityZodiac>> {
+    return Object.map(await rev.state<Partial<Record<number, UnityZodiacData>>>("gameData.unity.inventory"),
+      (key, value) => value && [key, new UnityZodiac(value)]);
+  }
+
+  static async planetZodiacInventory(): Promise<Partial<Record<keyof typeof Planet, UnityZodiac>>> {
+    return Object.map(await rev.state<Partial<Record<keyof typeof Planet, UnityZodiacData>>>("gameData.unity.planetsInventory"),
+      (key, value) => value && [key, new UnityZodiac(value)]);
+  }
+
+  static async attackRelics() {
+    return (await rev.state<AttackRelicData[]>("gameData.attacks.relics"))
+      .map(relic => new AttackRelic(relic));
+  }
+
+  static async attackRelic(n: number) {
+    return new AttackRelic((await rev.state<AttackRelicData>(`gameData.attacks.relics.${n}`)));
+  }
+
+  static async zodiacInventorySlotCount() {
+    return await rev.state<number>("gameController.inventory.SlotZodiac.CurrentValue");
+  }
+
+  static async currentAttackDamage() {
+    return new BigNum(await rev.state<string>("gameData.attacks.totalAtkMult"));
+  }
+
+  static async eternalChallenge(n: number) {
+    return new EternalChallenge(await rev.state<EternalChallengeData>(`gameData.eternity.challenges.${n}`));
+  }
+
+  static async eternalChallengeCompletedCount() {
+    return await rev.state<number>("challengesCompletedCount");
+  }
+
+  static async nextUnityZodiacs() {
+    return (await rev.state<UnityZodiacData[]>("gameData.unity.NextZodiacs")).map(zodiac => new UnityZodiac(zodiac));
+  }
+
+  static async sacrificeState() {
+    return Object.values(await rev.state<Partial<Record<keyof typeof ZodiacStatType, SacriStatData>>>("gameData.unity.sacriStats"))
+      .map(data => new SacriStat(data));
+  }
+
+  static async attackLevel() {
+    return new AttackLevel(await rev.state<AttackLevelData>("gameData.attacks.level"));
+  }
+
+  static async attackRevolutions() {
+    return (await rev.state<AttacksRevolutionData[]>("gameData.attacks.revolutions"))
+      .map(data => new AttacksRevolution(data));
+  }
+
+  static async attackRevolution(n: number) {
+    return new AttacksRevolution(await rev.state<AttacksRevolutionData>(`gameData.attacks.revolutions.${n}`));
+  }
+
+  static async attackRevolutionMults() {
+    const indexes = [0, 1, 2, 3, 4];
+    const values = await rev.state(...indexes.flatMap(index => [
+      `gameData.attacks.revolutions.${index}.IsActive`,
+      `gameData.attacks.revolutions.${index}.mult`,
+    ])) as Readonly<Record<string, boolean | string>>;
+    return indexes.map(index => values[`gameData.attacks.revolutions.${index}.IsActive`]
+      ? new BigNum(values[`gameData.attacks.revolutions.${index}.mult`] as string)
+      : null);
+  }
+
+  static async attackRevolutionProgressions() {
+    const indexes = [0, 1, 2, 3, 4];
+    const values = await rev.state(...indexes.flatMap(index => [
+      `gameData.attacks.revolutions.${index}.IsActive`,
+      `gameData.attacks.revolutions.${index}.progress`,
+    ])) as Readonly<Record<string, boolean | string>>;
+    return indexes.map(index => values[`gameData.attacks.revolutions.${index}.IsActive`]
+      ? new BigNum(values[`gameData.attacks.revolutions.${index}.progress`] as string)
+      : null);
+  }
+
+  static async attackRevolutionCanBuy(n: number) {
+    return Boolean(await rev.state<boolean>(`gameData.attacks.revolutions.${n}.CanPurchase`));
+  }
+
+  static async maxAttackLevelReached() {
+    return Number(await rev.state<string>("gameData.attacks.maxLevelReached"));
+  }
+
+  static async currentMineralLevel() {
+    return new BigNum(await rev.state<string>("gameData.minerals.curMineralLevel"));
+  }
+
+  static async currentMineralCost() {
+    return new BigNum(await rev.state<string>("gameData.minerals.curMineralCost"));
+  }
+
+  static async minMineralCost() {
+    return new BigNum(await rev.state<string>("gameData.minerals.minMineralCost"));
+  }
+
+  static async maxMineralLevel() {
+    return new BigNum(await rev.state<string>("gameData.minerals.maxMineralLevel"));
+  }
+
+  static async commonMinerals() {
+    return Object.map(await rev.state<Partial<Record<number, CommonMineralData>>>("gameData.minerals.commonMinerals"),
+      (slot, data) => data && [slot, new CommonMineral(data)] as const);
+  }
+
+  static async mineralUpgrades(): Promise<Partial<Record<keyof typeof MineralUpgradeType, MineralUpgrade>>> {
+    return Object.map(await rev.state<Partial<Record<keyof typeof MineralUpgradeType, MineralsUpgradeData>>>("gameData.minerals.upgrades"),
+      (type, data) => [type, new MineralUpgrade(data)] as const);
+  }
+
+  static async mineralUpgrade(type: MineralUpgradeType) {
+    return new MineralUpgrade(await rev.state<MineralsUpgradeData>(`gameData.minerals.upgrades.${MineralUpgradeType[type]}`));
+  }
+
+  static async polishUpgrades(): Promise<Partial<Record<keyof typeof PolishUpgradeType, PolishUpgrade>>> {
+    return Object.map(await rev.state<Partial<Record<keyof typeof PolishUpgradeType, PolishUpgradeData>>>(`gameData.minerals.polishUpgrades`),
+      (type, data) => [type, new PolishUpgrade(data)] as const);
+  }
+
+  static async polishUpgrade(type: PolishUpgradeType) {
+    return new PolishUpgrade(await rev.state<PolishUpgradeData>(`gameData.minerals.polishUpgrades.${PolishUpgradeType[type]}`));
+  }
+}
 
 
 export type EternalChallengeData = {
@@ -700,112 +906,4 @@ export enum StartFromEnum {
   Manual = 0,
   Automation = 1,
   Macro = 2,
-}
-
-
-interface StatePoint<D, T, A extends any[] = []> {
-  (...args: A): Promise<T>;
-}
-
-class StatePoint<D, T, A extends any[] = []> extends Function {
-  constructor(
-    readonly srcKey: A["length"] extends 0 ? string : ((...args: A) => string),
-    readonly mapper: (data: D) => T | Promise<T>
-  ) {
-    super();
-    return new Proxy(this, {
-      apply: async (target, _, argumentsList: A) => await target.mapper(await rev.state<D>(
-        typeof this.srcKey === "function" ? this.srcKey(...argumentsList) : this.srcKey))
-    });
-  }
-
-  with(...args: A) {
-    return new StatePoint<D, T, []>(
-      typeof this.srcKey === "function" ? this.srcKey(...args) : this.srcKey,
-      this.mapper);
-  }
-}
-
-
-type BulkStateResult<T extends StatePoint<any, any, []>[]> =
-  T extends [infer S, ...infer R extends StatePoint<any, any, []>[]]
-    ? S extends StatePoint<any, infer V, []> ? [V, ...BulkStateResult<R>] : never : [];
-
-export class States {
-  static async getAll<T extends StatePoint<any, any, []>[]>(...sps: T): Promise<BulkStateResult<T>> {
-    if (sps.length === 0) return [] as BulkStateResult<T>;
-    if (sps.length === 1) return [await sps[0]()] as BulkStateResult<T>;
-
-    const keys = [...new Set<string>(sps.map(p => p.srcKey))];
-    const rawResult = (keys.length === 1 ? { [keys[0]]: await rev.state(keys[0]) } : await rev.state(...keys)) as { [key: string]: RevJsonValue };
-    return await Promise.all(sps.map(p => p.mapper(rawResult[p.srcKey]))) as BulkStateResult<T>;
-  }
-
-  static unlockedAchievements = new StatePoint<number[], Set<number>>("gameData.unlockedAch", v => new Set(v.map(id => id + 1)));
-
-  static infinities = new StatePoint<string, BigNum>("gameData.infinity.infs", v => new BigNum(v));
-  static eternities = new StatePoint<string, BigNum>("gameData.eternity.eters", v => new BigNum(v));
-  static unities = new StatePoint<string, BigNum>("gameData.unity.unities", v => new BigNum(v));
-
-  static currentIP = new StatePoint<string, BigNum>("IP", v => new BigNum(v));
-  static currentEP = new StatePoint<string, BigNum>("EP", v => new BigNum(v));
-  static currentDP = new StatePoint<string, BigNum>("gameData.eternity.DP", v => new BigNum(v));
-  static currentGold = new StatePoint<string, BigNum>("gameData.attacks.gold", v => new BigNum(v));
-
-  static nextIP = new StatePoint<string, BigNum>("nextIP", v => new BigNum(v));
-  static nextEP = new StatePoint<string, BigNum>("nextEP", v => new BigNum(v));
-  static nextGold = new StatePoint<string, BigNum>("gameData.attacks.goldOnUnity", v => new BigNum(v));
-  static nextUnityZodiacs = new StatePoint<UnityZodiacData[], UnityZodiac[]>("gameData.unity.NextZodiacs", ArrayMapper(UnityZodiac));
-
-  static eternalChallenge = new StatePoint<EternalChallengeData, EternalChallenge, [number]>(n => `gameData.eternity.challenges.${n}`, v => new EternalChallenge(v));
-  static eternalChallengeCompletedCount = new StatePoint<number, number>("challengesCompletedCount", v => v);
-
-  static supernovaLevel = new StatePoint<number, number>("gameData.eternity.supernovaLv", v => v);
-  static totalAP = new StatePoint<string, BigNum>("gameData.eternity.APbought", v => new BigNum(v));
-  static totalDTP = new StatePoint<number, number>("DTP", v => v);
-  static unusedDTP = new StatePoint<number, number>("dtpFree", v => v);
-  static spentDTP = new StatePoint<number, number>("dtpSpent", v => v);
-  static dilationMaxScore = new StatePoint<string, BigNum>("dilationMaxScore", v => new BigNum(v));
-  static inDilation = new StatePoint<boolean, boolean>("gameData.eternity.inDilation", v => v);
-
-  static unityLevel = new StatePoint<string, BigNum>("unityLevel", v => new BigNum(v));
-  static zodiacInventorySlotCount = new StatePoint<number, number>("gameController.inventory.SlotZodiac.CurrentValue", v => v);
-  static unityZodiacInventory = new StatePoint<Partial<Record<number, UnityZodiacData>>, Record<string, UnityZodiac>>("gameData.unity.inventory", ObjectMapper(UnityZodiac));
-  static planetZodiacInventory = new StatePoint<Partial<Record<keyof typeof Planet, UnityZodiacData>>, Partial<Record<keyof typeof Planet, UnityZodiac>>>("gameData.unity.planetsInventory", ObjectMapper(UnityZodiac));
-  static sacrificeState = new StatePoint<Partial<Record<keyof typeof ZodiacStatType, SacriStatData>>, SacriStat[]>("gameData.unity.sacriStats", ValuesMapper(SacriStat));
-
-  static currentAttackDamage = new StatePoint<string, BigNum>("gameData.attacks.totalAtkMult", v => new BigNum(v));
-  static attackRelics = new StatePoint<AttackRelicData[], AttackRelic[]>("gameData.attacks.relics", ArrayMapper(AttackRelic));
-  static attackRelic = new StatePoint<AttackRelicData, AttackRelic, [number]>(n => `gameData.attacks.relics.${n}`, v => new AttackRelic(v));
-  static attackLevel = new StatePoint<AttackLevelData, AttackLevel>("gameData.attacks.level", v => new AttackLevel(v));
-  static maxAttackLevelReached = new StatePoint<string, number>("gameData.attacks.maxLevelReached", Number);
-  static attackRevolutions = new StatePoint<AttacksRevolutionData[], AttacksRevolution[]>("gameData.attacks.revolutions", ArrayMapper(AttacksRevolution));
-  static attackRevolution = new StatePoint<AttacksRevolutionData, AttacksRevolution, [number]>(n => `gameData.attacks.revolutions.${n}`, v => new AttacksRevolution(v));
-  static attackRevolutionMults = new StatePoint<AttacksRevolutionData[], (BigNum | null)[], []>("gameData.attacks.revolutions", v => v.map(x => x.IsActive ? new BigNum(x.mult) : null));
-  static attackRevolutionProgressions = new StatePoint<AttacksRevolutionData[], (BigNum | null)[], []>("gameData.attacks.revolutions", v => v.map(x => x.IsActive ? new BigNum(x.progress) : null));
-  static attackRevolutionCanBuy = new StatePoint<AttacksRevolutionData, boolean, [number]>(n => `gameData.attacks.revolutions.${n}`, v => v.CanPurchase);
-
-  static currentMineralLevel = new StatePoint<string, BigNum>("gameData.minerals.curMineralLevel", v => new BigNum(v));
-  static currentMineralCost = new StatePoint<string, BigNum>("gameData.minerals.curMineralCost", v => new BigNum(v));
-  static minMineralCost = new StatePoint<string, BigNum>("gameData.minerals.minMineralCost", v => new BigNum(v));
-  static maxMineralLevel = new StatePoint<string, BigNum>("gameData.minerals.maxMineralLevel", v => new BigNum(v));
-  static commonMinerals = new StatePoint<Partial<Record<number, CommonMineralData>>, Record<string, CommonMineral>>("gameData.minerals.commonMinerals", ObjectMapper(CommonMineral));
-  static mineralUpgrades = new StatePoint<Partial<Record<keyof typeof MineralUpgradeType, MineralsUpgradeData>>, Partial<Record<keyof typeof MineralUpgradeType, MineralUpgrade>>>("gameData.minerals.upgrades", ObjectMapper(MineralUpgrade));
-  static mineralUpgrade = new StatePoint<MineralsUpgradeData, MineralUpgrade, [MineralUpgradeType]>(n => `gameData.minerals.upgrades.${MineralUpgradeType[n]}`, v => new MineralUpgrade(v));
-  static polishUpgrades = new StatePoint<Partial<Record<keyof typeof PolishUpgradeType, PolishUpgradeData>>, Partial<Record<keyof typeof PolishUpgradeType, PolishUpgrade>>>("gameData.minerals.polishUpgrades", ObjectMapper(PolishUpgrade));
-  static polishUpgrade = new StatePoint<PolishUpgradeData, PolishUpgrade, [PolishUpgradeType]>(n => `gameData.minerals.polishUpgrades.${PolishUpgradeType[n]}`, v => new PolishUpgrade(v));
-}
-
-
-function ArrayMapper<D, T>(cls: new (data: D) => T) {
-  return (arr: D[]) => arr.map(data => new cls(data));
-}
-
-function ObjectMapper<K extends string | number, D, T>(cls: new (data: D) => T) {
-  return (obj: Partial<Record<K, D>>) => Object.map(obj,
-    (key, data: D | undefined) => data && [key, new cls(data)]);
-}
-
-function ValuesMapper<D, T>(cls: new (data: D) => T) {
-  return (obj: Record<any, D>) => Object.values(obj).map(data => new cls(data));
 }

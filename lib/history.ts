@@ -1,4 +1,4 @@
-import { UnityZodiac, UnityZodiacData, ZodiacElement, ZodiacRarity, ZodiacSeason, ZodiacSign, ZodiacStatType } from "./states.ts";
+import { UnityZodiac, UnityZodiacData, ZodiacElement, ZodiacRarity, ZodiacSeason, ZodiacSign, ZodiacStatType } from "./states_unity.ts";
 import { BigNum, GlobalVar } from "./utils.ts";
 
 
