@@ -57,3 +57,7 @@ export async function beforePause() {
   for (const ext of loadedExtensions.values())
     await ext.onPause?.();
 }
+
+export async function afterLoad() {
+  console.clear();
+}
