@@ -350,9 +350,16 @@ export class GlobalVar<T extends RevJsonValue> {
 }
 
 
-export async function screenScope(label: string, fn: (so: () => Promise<ScreenOwnership>) => Promise<void>) {
+export type ScreenScopeGuard = (label?: string) => Promise<ScreenOwnership>;
+export async function screenScope(label: string, fn: (so: ScreenScopeGuard) => Promise<void>) {
   let so: Promise<ScreenOwnership> | undefined;
-  try { await fn(async () => so ??= rev.screenOwnership(label)); }
+  const getScreenOwnership = async (newLabel?: string) => {
+    if (!so) so = rev.screenOwnership(newLabel ?? label);
+    if (newLabel != null) (await so).rename(newLabel);
+    return await so;
+  };
+
+  try { await fn(getScreenOwnership); }
   finally { (await so)?.release(); }
 }
 
