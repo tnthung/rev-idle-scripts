@@ -369,46 +369,67 @@ export class Timer {
   static MIN_TICK_INTERVAL = 10;
 
   private running: boolean = false;
+  private pausing:  boolean = false;
   private elapsed: number = 0;
 
   constructor(createStopped = false) {
     if (!createStopped) this.restart();
   }
 
-  getElapsed(): number {
+  getElapsed() {
     return this.elapsed;
   }
 
-  restart(): void {
+  restart() {
+    if (this.running) {
+      this.elapsed = 0;
+      return;
+    }
+
     this.elapsed = 0;
     this.running = true;
+    this.pausing = false;
 
     (async () => {
       try {
         let lastTickAt = Date.now();
         while (this.running) {
+          await rev.sleep(Timer.MIN_TICK_INTERVAL);
+          if (this.pausing) continue;
+
           const now = Date.now();
           const delta = now - lastTickAt;
 
           if (delta <= Timer.PAUSE_THRESHOLD)
             this.elapsed += delta;
           lastTickAt = now;
-
-          await rev.sleep(Timer.MIN_TICK_INTERVAL);
         }
       } catch (err) {
         console.error("Timer encountered an error:", err);
+      } finally {
         this.running = false;
       }
     })()
   }
 
-  stop(): void {
+  stop() {
     this.running = false;
   }
 
-  stopped(): boolean {
+  stopped() {
     return !this.running;
+  }
+
+  pause() {
+    this.pausing = true;
+  }
+
+  resume() {
+    this.pausing = false;
+  }
+
+  paused() {
+    return this.pausing;
   }
 }
 
