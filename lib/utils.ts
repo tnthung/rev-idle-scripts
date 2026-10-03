@@ -364,6 +364,44 @@ export async function screenScope(label: string, fn: (so: ScreenScopeGuard) => P
 }
 
 
+export class Timer {
+  static PAUSE_THRESHOLD = 200;
+  static MIN_TICK_INTERVAL = 10;
+
+  private running: boolean = true;
+  private elapsed: number = 0;
+
+  constructor() {
+    (async () => {
+      let lastTickAt = Date.now();
+      while (this.running) {
+        const now = Date.now();
+        const delta = now - lastTickAt;
+
+        if (delta <= Timer.PAUSE_THRESHOLD)
+          this.elapsed += delta;
+        lastTickAt = now;
+
+        await rev.sleep(Timer.MIN_TICK_INTERVAL);
+      }
+    })()
+  }
+
+  getElapsed(): number {
+    return this.elapsed;
+  }
+
+  restart(): void {
+    this.elapsed = 0;
+  }
+
+  /** Permanently stops the timer. */
+  stop(): void {
+    this.running = false;
+  }
+}
+
+
 export type Enumerate<N extends number, Acc extends number[] = []> =
   Acc['length'] extends N ? Acc[number] : Enumerate<N, [...Acc, Acc['length']]>;
 
