@@ -17,6 +17,416 @@ export function isStringNumeric(value: string): boolean {
 }
 
 
+export type ColorBlendMode = "normal" | "multiply" | "screen" | "overlay" | "darken" | "lighten"
+  | "color-dodge" | "color-burn" | "hard-light" | "soft-light" | "difference" | "exclusion";
+
+/**
+ * Immutable sRGB color. RGB/RGBA channels use 0..255; other components and alpha use 0..1.
+ * HSL, HSV, and HWB hue uses degrees and wraps at 360. Finite channels are clamped.
+ * Numeric factories accept separate components or a tuple; conversions retain alpha.
+ */
+export class Color {
+  private constructor(private r: number, private g: number, private b: number, private a = 255) {
+    if (![r, g, b, a].every(Number.isFinite)) throw new Error("Invalid color channels.");
+    this.r = Math.max(0, Math.min(255, r));
+    this.g = Math.max(0, Math.min(255, g));
+    this.b = Math.max(0, Math.min(255, b));
+    this.a = Math.max(0, Math.min(255, a));
+  }
+
+  static fromRgb(rgb: readonly [number, number, number, number?]): Color;
+  static fromRgb(r: number, g: number, b: number, a?: number): Color;
+  static fromRgb(r: number | readonly [number, number, number, number?], g?: number, b?: number, a = 255) {
+    return typeof r === "number" ? new Color(r, g!, b!, a) : new Color(...r);
+  }
+
+  static fromNormalizedRgb(rgb: readonly [number, number, number, number?]): Color;
+  static fromNormalizedRgb(r: number, g: number, b: number, a?: number): Color;
+  static fromNormalizedRgb(r: number | readonly [number, number, number, number?], g?: number, b?: number, a = 1): Color {
+    if (typeof r !== "number") return Color.fromNormalizedRgb(...r);
+    return new Color(r * 255, g! * 255, b! * 255, a * 255);
+  }
+
+  static fromLinearRgb(rgb: readonly [number, number, number, number?]): Color;
+  static fromLinearRgb(r: number, g: number, b: number, a?: number): Color;
+  static fromLinearRgb(r: number | readonly [number, number, number, number?], g?: number, b?: number, a = 1): Color {
+    if (typeof r !== "number") return Color.fromLinearRgb(...r);
+    if (![r, g, b, a].every(Number.isFinite)) throw new Error("Invalid linear RGB color.");
+    return new Color(...[r, g!, b!].map(channel => {
+      channel = Math.max(0, Math.min(1, channel));
+      return 255 * (channel <= 0.0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - 0.055);
+    }) as [number, number, number], a * 255);
+  }
+
+  static fromHsl(hsl: readonly [number, number, number, number?]): Color;
+  static fromHsl(h: number, s: number, l: number, a?: number): Color;
+  static fromHsl(h: number | readonly [number, number, number, number?], s?: number, l?: number, a = 1): Color {
+    if (typeof h !== "number") return Color.fromHsl(...h);
+    if (![h, s, l, a].every(Number.isFinite)) throw new Error("Invalid HSL color.");
+    s = Math.max(0, Math.min(1, s!));
+    l = Math.max(0, Math.min(1, l!));
+    const v = l + s * Math.min(l, 1 - l);
+    return Color.fromHsv(h, v === 0 ? 0 : 2 * (1 - l / v), v, a);
+  }
+
+  static fromHsv(hsv: readonly [number, number, number, number?]): Color;
+  static fromHsv(h: number, s: number, v: number, a?: number): Color;
+  static fromHsv(h: number | readonly [number, number, number, number?], s?: number, v?: number, a = 1): Color {
+    if (typeof h !== "number") return Color.fromHsv(...h);
+    if (![h, s, v, a].every(Number.isFinite)) throw new Error("Invalid HSV color.");
+    h = ((h % 360) + 360) % 360 / 60;
+    s = Math.max(0, Math.min(1, s!));
+    v = Math.max(0, Math.min(1, v!));
+    const chroma = v * s;
+    const x = chroma * (1 - Math.abs(h % 2 - 1));
+    return new Color(...(h < 1 ? [chroma, x, 0] : h < 2 ? [x, chroma, 0]
+      : h < 3 ? [0, chroma, x] : h < 4 ? [0, x, chroma]
+      : h < 5 ? [x, 0, chroma] : [chroma, 0, x])
+      .map(channel => (channel + v - chroma) * 255) as [number, number, number], a * 255);
+  }
+
+  static fromHwb(hwb: readonly [number, number, number, number?]): Color;
+  static fromHwb(h: number, w: number, b: number, a?: number): Color;
+  static fromHwb(h: number | readonly [number, number, number, number?], w?: number, b?: number, a = 1): Color {
+    if (typeof h !== "number") return Color.fromHwb(...h);
+    if (![h, w, b, a].every(Number.isFinite)) throw new Error("Invalid HWB color.");
+    w = Math.max(0, Math.min(1, w!));
+    b = Math.max(0, Math.min(1, b!));
+    if (w + b >= 1) {
+      const gray = w / (w + b) * 255;
+      return new Color(gray, gray, gray, a * 255);
+    }
+    return new Color(...Color.fromHsv(h, 1, 1).toNormalizedRgb().slice(0, 3)
+      .map(channel => (channel * (1 - w! - b!) + w!) * 255) as [number, number, number], a * 255);
+  }
+
+  /** Simple device CMYK conversion; no printer profile is applied. */
+  static fromCmyk(cmyk: readonly [number, number, number, number, number?]): Color;
+  static fromCmyk(c: number, m: number, y: number, k: number, a?: number): Color;
+  static fromCmyk(c: number | readonly [number, number, number, number, number?], m?: number, y?: number, k?: number, a = 1): Color {
+    if (typeof c !== "number") return Color.fromCmyk(...c);
+    if (![c, m, y, k, a].every(Number.isFinite)) throw new Error("Invalid CMYK color.");
+    k = Math.max(0, Math.min(1, k!));
+    return new Color(
+      (1 - Math.max(0, Math.min(1, c))) * (1 - k) * 255,
+      (1 - Math.max(0, Math.min(1, m!))) * (1 - k) * 255,
+      (1 - Math.max(0, Math.min(1, y!))) * (1 - k) * 255,
+      a * 255,
+    );
+  }
+
+  static fromHex(hex: string) {
+    hex = hex.trim().replace(/^#/, "");
+    if (!/^(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(hex))
+      throw new Error("Invalid hex color.");
+    if (hex.length <= 4) hex = hex.split("").map(c => c + c).join("");
+    return new Color(
+      parseInt(hex.slice(0, 2), 16),
+      parseInt(hex.slice(2, 4), 16),
+      parseInt(hex.slice(4, 6), 16),
+      hex.length === 8 ? parseInt(hex.slice(6, 8), 16) : 255,
+    );
+  }
+
+  /** Parse hex, transparent, rgb()/rgba(), hsl()/hsla(), or hwb(). */
+  static fromCss(css: string) {
+    css = css.trim().toLowerCase();
+    if (css === "transparent") return new Color(0, 0, 0, 0);
+    if (css.startsWith("#")) return Color.fromHex(css);
+    const match = /^(rgba?|hsla?|hwb)\((.*)\)$/s.exec(css);
+    if (!match) throw new Error("Unsupported CSS color.");
+    const legacy = match[2].includes(",");
+    let parts: string[];
+    if (legacy) {
+      if (match[2].includes("/") || match[1] === "hwb") throw new Error("Invalid CSS color.");
+      parts = match[2].split(/\s*,\s*/).map(part => part.trim());
+    } else {
+      const separated = match[2].trim().split(/\s*\/\s*/);
+      if (separated.length > 2 || separated.some(part => part.trim() === ""))
+        throw new Error("Invalid CSS color.");
+      parts = separated[0].trim().split(/\s+/);
+      if (parts.length !== 3) throw new Error("Invalid CSS color.");
+      if (separated.length === 2) parts.push(separated[1].trim());
+    }
+    if ((parts.length !== 3 && parts.length !== 4) || !parts.every((part, index) =>
+      index === 0 && !match[1].startsWith("rgb")
+        ? /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?(?:deg|grad|rad|turn)?$/.test(part)
+        : /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?%?$/.test(part)))
+      throw new Error("Invalid CSS color.");
+    if (legacy && (match[1].startsWith("hsl") && parts.slice(1, 3).some(part => !part.endsWith("%"))
+      || match[1].startsWith("rgb") && parts.slice(0, 3).some(part => part.endsWith("%") !== parts[0].endsWith("%"))))
+      throw new Error("Invalid legacy CSS color.");
+    const values = parts.map(part => parseFloat(part));
+    if (!values.every(Number.isFinite)) throw new Error("Invalid CSS color.");
+    const alpha = Math.max(0, Math.min(1, parts.length === 4 ? values[3] / (parts[3].endsWith("%") ? 100 : 1) : 1));
+    if (match[1].startsWith("rgb"))
+      return new Color(...values.slice(0, 3).map((value, index) =>
+        parts[index].endsWith("%") ? value / 100 * 255 : value) as [number, number, number], alpha * 255);
+    if (match[1] === "hwb" && Math.max(0, values[1]) + Math.max(0, values[2]) >= 100) {
+      const gray = Math.max(0, values[1]) / (Math.max(0, values[1]) + Math.max(0, values[2])) * 255;
+      return new Color(gray, gray, gray, alpha * 255);
+    }
+    return (match[1] === "hwb" ? Color.fromHwb : Color.fromHsl)(
+      values[0] * (parts[0].endsWith("turn") ? 360 : parts[0].endsWith("grad") ? 0.9
+        : parts[0].endsWith("rad") ? 180 / Math.PI : 1),
+      values[1] / 100, values[2] / 100, alpha,
+    );
+  }
+
+  /** Scale RGB channels while preserving alpha. */
+  brightness(factor: number) {
+    return new Color(this.r * factor, this.g * factor, this.b * factor, this.a);
+  }
+
+  /** Scale channel distance from middle gray; 1 keeps the original contrast. */
+  contrast(factor: number) {
+    return new Color(
+      (this.r - 127.5) * factor + 127.5,
+      (this.g - 127.5) * factor + 127.5,
+      (this.b - 127.5) * factor + 127.5,
+      this.a,
+    );
+  }
+
+  /** Apply a positive gamma; values above 1 brighten the color. */
+  gamma(value: number) {
+    if (!Number.isFinite(value) || value <= 0) throw new Error("Invalid gamma.");
+    return new Color(
+      255 * (this.r / 255) ** (1 / value),
+      255 * (this.g / 255) ** (1 / value),
+      255 * (this.b / 255) ** (1 / value),
+      this.a,
+    );
+  }
+
+  rotateHue(degrees: number) {
+    const hsl = this.toHsl();
+    return Color.fromHsl(hsl[0] + degrees, hsl[1], hsl[2], hsl[3]);
+  }
+
+  /** Scale HSL saturation; 0 removes saturation and 1 keeps it. */
+  saturation(factor: number) {
+    const hsl = this.toHsl();
+    return Color.fromHsl(hsl[0], hsl[1] * factor, hsl[2], hsl[3]);
+  }
+
+  /** Add to HSL lightness, using a 0..1 amount. */
+  lighten(amount = 0.1) {
+    const hsl = this.toHsl();
+    return Color.fromHsl(hsl[0], hsl[1], hsl[2] + amount, hsl[3]);
+  }
+
+  darken(amount = 0.1) {
+    return this.lighten(-amount);
+  }
+
+  /** Set opacity from 0 (transparent) to 1 (opaque). */
+  opacity(value: number) {
+    return new Color(this.r, this.g, this.b, value * 255);
+  }
+
+  /** Scale the existing alpha. */
+  fade(factor: number) {
+    return new Color(this.r, this.g, this.b, this.a * factor);
+  }
+
+  /** Interpolate RGBA channels; amount 0 keeps this color and 1 selects the other. */
+  mix(other: Color, amount = 0.5) {
+    if (!Number.isFinite(amount)) throw new Error("Invalid blend amount.");
+    amount = Math.max(0, Math.min(1, amount));
+    return new Color(
+      this.r + (other.r - this.r) * amount,
+      this.g + (other.g - this.g) * amount,
+      this.b + (other.b - this.b) * amount,
+      this.a + (other.a - this.a) * amount,
+    );
+  }
+
+  tint(amount = 0.1) {
+    return this.mix(new Color(255, 255, 255, this.a), amount);
+  }
+
+  shade(amount = 0.1) {
+    return this.mix(new Color(0, 0, 0, this.a), amount);
+  }
+
+  invert(amount = 1) {
+    return this.mix(new Color(255 - this.r, 255 - this.g, 255 - this.b, this.a), amount);
+  }
+
+  /** Convert to gray with the same relative luminance. */
+  grayscale(amount = 1) {
+    const luminance = this.luminance();
+    const gray = 255 * (luminance <= 0.0031308 ? luminance * 12.92 : 1.055 * luminance ** (1 / 2.4) - 0.055);
+    return this.mix(new Color(gray, gray, gray, this.a), amount);
+  }
+
+  sepia(amount = 1) {
+    return this.mix(new Color(
+      this.r * 0.393 + this.g * 0.769 + this.b * 0.189,
+      this.r * 0.349 + this.g * 0.686 + this.b * 0.168,
+      this.r * 0.272 + this.g * 0.534 + this.b * 0.131,
+      this.a,
+    ), amount);
+  }
+
+  /** Blend a source over this color, including alpha compositing. */
+  blend(source: Color, mode: ColorBlendMode = "normal", amount = 1) {
+    if (!Number.isFinite(amount)) throw new Error("Invalid blend amount.");
+    const sourceAlpha = source.a / 255 * Math.max(0, Math.min(1, amount));
+    const backdropAlpha = this.a / 255;
+    const alpha = sourceAlpha + backdropAlpha * (1 - sourceAlpha);
+    return new Color(...[this.r, this.g, this.b].map((channel, index) => {
+      const backdrop = channel / 255;
+      const foreground = [source.r, source.g, source.b][index] / 255;
+      let blended: number;
+      switch (mode) {
+        case "normal":      blended = foreground; break;
+        case "multiply":    blended = backdrop * foreground; break;
+        case "screen":      blended = backdrop + foreground - backdrop * foreground; break;
+        case "overlay":     blended = backdrop <= 0.5 ? 2 * backdrop * foreground : 1 - 2 * (1 - backdrop) * (1 - foreground); break;
+        case "darken":      blended = Math.min(backdrop, foreground); break;
+        case "lighten":     blended = Math.max(backdrop, foreground); break;
+        case "color-dodge": blended = backdrop === 0 ? 0 : foreground === 1 ? 1 : Math.min(1, backdrop / (1 - foreground)); break;
+        case "color-burn":  blended = backdrop === 1 ? 1 : foreground === 0 ? 0 : 1 - Math.min(1, (1 - backdrop) / foreground); break;
+        case "hard-light":  blended = foreground <= 0.5 ? 2 * backdrop * foreground : 1 - 2 * (1 - backdrop) * (1 - foreground); break;
+        case "soft-light":  blended = foreground <= 0.5 ? backdrop - (1 - 2 * foreground) * backdrop * (1 - backdrop)
+          : backdrop + (2 * foreground - 1) * ((backdrop <= 0.25 ? ((16 * backdrop - 12) * backdrop + 4) * backdrop : Math.sqrt(backdrop)) - backdrop); break;
+        case "difference":  blended = Math.abs(backdrop - foreground); break;
+        case "exclusion":   blended = backdrop + foreground - 2 * backdrop * foreground; break;
+        default: throw new Error("Invalid blend mode.");
+      }
+      return alpha === 0 ? 0 : 255 * ((1 - sourceAlpha) * backdropAlpha * backdrop
+        + sourceAlpha * ((1 - backdropAlpha) * foreground + backdropAlpha * blended)) / alpha;
+    }) as [number, number, number], alpha * 255);
+  }
+
+  over(background: Color) {
+    return background.blend(this);
+  }
+
+  /** Relative sRGB luminance; composite with over() first to account for alpha. */
+  luminance() {
+    return this.toLinearRgb().slice(0, 3).reduce((sum, channel, index) =>
+      sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+  }
+
+  contrastRatio(other: Color) {
+    const a = this.luminance();
+    const b = other.luminance();
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  }
+
+  /** Choose the black or white text color with greater contrast. */
+  textColor() {
+    return this.luminance() > Math.sqrt(0.0525) - 0.05 ? new Color(0, 0, 0) : new Color(255, 255, 255);
+  }
+
+  equals(other: Color, tolerance = 0) {
+    if (!Number.isFinite(tolerance) || tolerance < 0) throw new Error("Invalid color tolerance.");
+    return Math.abs(this.r - other.r) <= tolerance && Math.abs(this.g - other.g) <= tolerance
+      && Math.abs(this.b - other.b) <= tolerance && Math.abs(this.a - other.a) <= tolerance;
+  }
+
+  complement() {
+    return this.rotateHue(180);
+  }
+
+  analogous(angle = 30): [Color, Color, Color] {
+    return [this.rotateHue(-angle), this, this.rotateHue(angle)];
+  }
+
+  triadic(): [Color, Color, Color] {
+    return [this, this.rotateHue(120), this.rotateHue(240)];
+  }
+
+  tetradic(): [Color, Color, Color, Color] {
+    return [this, this.rotateHue(90), this.rotateHue(180), this.rotateHue(270)];
+  }
+
+  splitComplementary(angle = 30): [Color, Color, Color] {
+    return [this, this.rotateHue(180 - angle), this.rotateHue(180 + angle)];
+  }
+
+  toRgb(): [number, number, number, number] {
+    return [Math.round(this.r), Math.round(this.g), Math.round(this.b), Math.round(this.a)];
+  }
+
+  toRbg(): [number, number, number, number] {
+    return this.toRgb();
+  }
+
+  toNormalizedRgb(): [number, number, number, number] {
+    return [this.r / 255, this.g / 255, this.b / 255, this.a / 255];
+  }
+
+  toLinearRgb(): [number, number, number, number] {
+    return [...[this.r, this.g, this.b].map(channel => {
+      channel /= 255;
+      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    }) as [number, number, number], this.a / 255];
+  }
+
+  toHsv(): [number, number, number, number] {
+    const max = Math.max(this.r, this.g, this.b);
+    const delta = max - Math.min(this.r, this.g, this.b);
+    let hue = 0;
+    if (delta !== 0) {
+      if      (max === this.r) hue = (this.g - this.b) / delta;
+      else if (max === this.g) hue = 2 + (this.b - this.r) / delta;
+      else                    hue = 4 + (this.r - this.g) / delta;
+      hue = (hue * 60 + 360) % 360;
+    }
+    return [hue, max === 0 ? 0 : delta / max, max / 255, this.a / 255];
+  }
+
+  toHsl(): [number, number, number, number] {
+    const hsv = this.toHsv();
+    const lightness = hsv[2] * (1 - hsv[1] / 2);
+    return [hsv[0], lightness === 0 || lightness === 1 ? 0
+      : (hsv[2] - lightness) / Math.min(lightness, 1 - lightness), lightness, hsv[3]];
+  }
+
+  toHwb(): [number, number, number, number] {
+    return [this.toHsv()[0], Math.min(this.r, this.g, this.b) / 255,
+      1 - Math.max(this.r, this.g, this.b) / 255, this.a / 255];
+  }
+
+  toCmyk(): [number, number, number, number, number] {
+    const k = 1 - Math.max(this.r, this.g, this.b) / 255;
+    if (k === 1) return [0, 0, 0, 1, this.a / 255];
+    return [(1 - this.r / 255 - k) / (1 - k), (1 - this.g / 255 - k) / (1 - k),
+      (1 - this.b / 255 - k) / (1 - k), k, this.a / 255];
+  }
+
+  toHex(includeAlpha = false) {
+    return "#" + this.toRgb().slice(0, includeAlpha ? 4 : 3)
+      .map(value => value.toString(16).padStart(2, "0")).join("");
+  }
+
+  toCss(format: "rgb" | "hsl" | "hwb" | "hex" = "rgb") {
+    switch (format) {
+      case "hex": return this.toHex(this.a < 255);
+      case "rgb": return `rgba(${this.toRgb().slice(0, 3).join(", ")}, ${Number((this.a / 255).toFixed(6))})`;
+      case "hsl":
+      case "hwb": {
+        const components = format === "hsl" ? this.toHsl() : this.toHwb();
+        return `${format}(${Number(components[0].toFixed(6))} ${Number((components[1] * 100).toFixed(6))}% ${Number((components[2] * 100).toFixed(6))}% / ${Number(components[3].toFixed(6))})`;
+      }
+      default: throw new Error("Invalid CSS color format.");
+    }
+  }
+
+  toString() {
+    return this.toHex(this.a < 255);
+  }
+
+  toJSON() {
+    return this.toRgb();
+  }
+}
+
+
 const ZODIAC_LOADOUT_BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 export class ZodiacLoadout {
