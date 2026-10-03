@@ -393,6 +393,69 @@ export class PolishUpgrade {
 }
 
 
+export type RefineNodeData = {
+  Bought: boolean;
+  CanBuy: boolean;
+  Maxed: boolean;
+  Next: RefineNodeData[];
+  buyAmount: string; // BigDouble
+  cost: string; // BigDouble
+  effect: string; // BigDouble
+  id: number;
+  level: string; // BigDouble
+  maxLevel: string; // BigDouble
+  next: number[];
+  prev: number[];
+  unlocked: boolean;
+}
+
+export class RefineNode {
+  Bought: boolean;
+  CanBuy: boolean;
+  Maxed: boolean;
+  Next: RefineNodeData[];
+  buyAmount: BigNum;
+  cost: BigNum;
+  effect: BigNum;
+  id: number;
+  level: BigNum;
+  maxLevel: BigNum;
+  next: number[];
+  prev: number[];
+  unlocked: boolean;
+
+  constructor({
+    Bought,
+    CanBuy,
+    Maxed,
+    Next,
+    buyAmount,
+    cost,
+    effect,
+    id,
+    level,
+    maxLevel,
+    next,
+    prev,
+    unlocked,
+  }: RefineNodeData) {
+    this.Bought = Bought;
+    this.CanBuy = CanBuy;
+    this.Maxed = Maxed;
+    this.Next = Next;
+    this.buyAmount = new BigNum(buyAmount);
+    this.cost = new BigNum(cost);
+    this.effect = new BigNum(effect);
+    this.id = id;
+    this.level = new BigNum(level);
+    this.maxLevel = new BigNum(maxLevel);
+    this.next = next;
+    this.prev = prev;
+    this.unlocked = unlocked;
+  }
+}
+
+
 export type AttacksRevolutionBuyableData = {
   allCost: string; // BigDouble
   amount: number;
@@ -794,6 +857,8 @@ export class States {
   static mineralUpgrade = new StatePoint<MineralsUpgradeData, MineralUpgrade, [MineralUpgradeType]>(n => `gameData.minerals.upgrades.${MineralUpgradeType[n]}`, v => new MineralUpgrade(v));
   static polishUpgrades = new StatePoint<Partial<Record<keyof typeof PolishUpgradeType, PolishUpgradeData>>, Partial<Record<keyof typeof PolishUpgradeType, PolishUpgrade>>>("gameData.minerals.polishUpgrades", ObjectMapper(PolishUpgrade));
   static polishUpgrade = new StatePoint<PolishUpgradeData, PolishUpgrade, [PolishUpgradeType]>(n => `gameData.minerals.polishUpgrades.${PolishUpgradeType[n]}`, v => new PolishUpgrade(v));
+  static refineNodes = new StatePoint<Partial<Record<number, RefineNodeData>>, Record<string, RefineNode>>("gameData.minerals.refineNodes", ObjectMapper(RefineNode));
+  static refineNode = new StatePoint<RefineNodeData, RefineNode, [number]>(n => `gameData.minerals.refineNodes.${n}`, v => new RefineNode(v));
 }
 
 
