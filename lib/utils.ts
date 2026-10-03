@@ -372,6 +372,17 @@ export class Timer {
   private elapsed: number = 0;
 
   constructor() {
+    this.restart();
+  }
+
+  getElapsed(): number {
+    return this.elapsed;
+  }
+
+  restart(): void {
+    this.elapsed = 0;
+    this.running = true;
+
     (async () => {
       try {
         let lastTickAt = Date.now();
@@ -392,17 +403,12 @@ export class Timer {
     })()
   }
 
-  getElapsed(): number {
-    return this.elapsed;
-  }
-
-  restart(): void {
-    this.elapsed = 0;
-  }
-
-  /** Permanently stops the timer. */
   stop(): void {
     this.running = false;
+  }
+
+  stopped(): boolean {
+    return !this.running;
   }
 }
 
