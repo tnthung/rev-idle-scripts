@@ -105,7 +105,6 @@ export async function onPoll() {
 
   await screenScope("Mineral Maintenance", async so => {
     await adjustCommonMineralSpawnLevel(so);
-    await spawnCommonMinerals(so);
     await mergeCommonMinerals(so);
     await refinePrestige(so);
     await polishPrestige(so);
@@ -160,6 +159,8 @@ async function spawnCommonMinerals(so: ScreenScopeGuard) {
 
 async function mergeCommonMinerals(so: ScreenScopeGuard) {
   while (true) {
+    await spawnCommonMinerals(so);
+
     const buckets = {} as Record<string, number[]>;
     for (const [slot, mineral] of Object.entries(await States.commonMinerals()))
       (buckets[mineral.level.toInt()] ??= []).push(Number(slot));
