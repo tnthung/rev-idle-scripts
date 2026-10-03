@@ -1,6 +1,7 @@
 import { Action } from "../lib/action.ts";
 import {
   BigNum,
+  Color,
   GlobalVar,
   screenScope,
   ScreenScopeGuard,
@@ -18,6 +19,7 @@ declare const rev: Readonly<RevWithUi<{
     lastCommonSpawnPassed: number | null;
   };
   mineralMaintenanceToggle: {
+    hover: boolean;
     enabled: boolean | null;
   };
 }>>;
@@ -27,6 +29,11 @@ export const MINERAL_SLOT_VIEW = "scene:-684/CANVAS[0]/safe_area[0]/views[1]/uni
 
 export const mineralMaintenanceEnabled = new GlobalVar<boolean>("mineralMaintenanceEnabled");
 export const refineNode22Bought        = new GlobalVar<boolean>("refineNode22Bought");
+
+export const BUTTON_RED   = [199, 69, 57] as const;
+export const BUTTON_GREEN = [31, 138, 74] as const;
+export const BORDER_RED   = Color.fromRgb(BUTTON_RED).brightness(0.7).toRgb();
+export const BORDER_GREEN = Color.fromRgb(BUTTON_GREEN).brightness(0.7).toRgb();
 
 const mineralLoopTimer        = new Timer(true);
 const commonMineralSpawnTimer = new Timer(true);
@@ -76,16 +83,26 @@ export async function onLoad() {
     corner: { radius: 5 },
     font: "Consolas",
     padding: { thickness: 5 },
-    states: { enabled: null },
+    states: {
+      hover: false,
+      enabled: null,
+    },
   }).setOnStateUpdate(function() {
-    this.color = this.states.enabled ? [31, 138, 74] : [199, 69, 57];
+    this.color = this.states.enabled ? BUTTON_GREEN : BUTTON_RED;
     this.text = this.states.enabled ? "Enabled" : "Disabled";
+    if (this.states.hover) this.border = { color: this.states.enabled ? BORDER_GREEN : BORDER_RED, thickness: 2 };
+    else delete this.border;
   }).setOnClick(async function() {
     this.states.enabled = !this.states.enabled;
     await mineralMaintenanceEnabled.set(this.states.enabled);
+  }).setOnHover(async function() {
+    this.states.hover = true;
+  }).setOnLeave(async function() {
+    this.states.hover = false;
   });
 
-  rev.ui.mineralMaintenanceToggle!.states.enabled = await mineralMaintenanceEnabled.getOrSet(false);
+  rev.ui.mineralMaintenanceToggle!.states.enabled =
+    await mineralMaintenanceEnabled.getOrSet(false);
 }
 
 
