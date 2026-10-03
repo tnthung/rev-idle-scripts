@@ -23,15 +23,18 @@ declare const rev: Readonly<RevWithUi<{
 }>>;
 
 
-const mineralMaintenanceEnabled = new GlobalVar<boolean>("mineralMaintenanceEnabled");
-const mineralLoopTimer          = new Timer(true);
-const commonMineralSpawnTimer   = new Timer(true);
+export const MINERAL_SLOT_VIEW = "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_left[1]/ctn_minerals[1]/views[0]/scrollview_common[0]/viewport[0]";
+
+export const mineralMaintenanceEnabled = new GlobalVar<boolean>("mineralMaintenanceEnabled");
+
+const mineralLoopTimer        = new Timer(true);
+const commonMineralSpawnTimer = new Timer(true);
 
 export async function onLoad() {
   await Action.unity.minerals.ensureCanSkip();
 
   rev.ui("mineralElapsedClock", {
-    basedOn: "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_left[1]/ctn_minerals[1]/views[0]/scrollview_common[0]/viewport[0]",
+    basedOn: MINERAL_SLOT_VIEW,
     posX: 0,
     posY: -15,
     font: "Consolas",
@@ -66,7 +69,7 @@ export async function onLoad() {
   })();
 
   rev.ui("mineralMaintenanceToggle", {
-    basedOn: "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_left[1]/ctn_minerals[1]/views[0]/scrollview_common[0]/viewport[0]",
+    basedOn: MINERAL_SLOT_VIEW,
     posX: 0,
     posY: -50,
     corner: { radius: 5 },
@@ -74,11 +77,9 @@ export async function onLoad() {
     padding: { thickness: 5 },
     states: { enabled: null },
   }).setOnStateUpdate(function() {
-
     this.color = this.states.enabled ? [31, 138, 74] : [199, 69, 57];
     this.text = this.states.enabled ? "Enabled" : "Disabled";
   }).setOnClick(async function() {
-    const mineralMaintenanceEnabled = new GlobalVar<boolean>("mineralMaintenanceEnabled");
     this.states.enabled = !this.states.enabled;
     await mineralMaintenanceEnabled.set(this.states.enabled);
   });
