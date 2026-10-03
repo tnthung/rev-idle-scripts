@@ -26,6 +26,7 @@ declare const rev: Readonly<RevWithUi<{
 export const MINERAL_SLOT_VIEW = "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_left[1]/ctn_minerals[1]/views[0]/scrollview_common[0]/viewport[0]";
 
 export const mineralMaintenanceEnabled = new GlobalVar<boolean>("mineralMaintenanceEnabled");
+export const refineNode22Bought        = new GlobalVar<boolean>("refineNode22Bought");
 
 const mineralLoopTimer        = new Timer(true);
 const commonMineralSpawnTimer = new Timer(true);
@@ -103,6 +104,9 @@ export async function onPoll() {
   if (mineralLoopTimer.stopped()) mineralLoopTimer.restart();
   if (commonMineralSpawnTimer.stopped()) commonMineralSpawnTimer.restart();
 
+  const refineNode22 = await States.refineNode(21);
+  await refineNode22Bought.set(refineNode22.Bought);
+
   await screenScope("Mineral Maintenance", async so => {
     await adjustCommonMineralSpawnLevel(so);
     await mergeCommonMinerals(so);
@@ -147,8 +151,15 @@ async function spawnCommonMinerals(so: ScreenScopeGuard) {
     States.currentGold,
     States.currentMineralCost);
 
-  // Skip spawning cost too much relative to owned gold.
-  if (gold.exponent - cur.exponent < 2n) return;
+  // Skip spawning when gold is less than the current mineral cost.
+  // Only apply this check if refineNode22 has been bought, because
+  // RN22 making spawning common minerals not costing gold.
+  if (await refineNode22Bought.get()) {
+    if (gold.lt(cur)) return;
+  }
+
+  // Skip spawning when cost too much relative to owned gold.
+  else if (gold.exponent - cur.exponent < 2n) return;
 
   if (!await mineralMaintenanceEnabled.get()) return;
   await so("Spawning common minerals");
