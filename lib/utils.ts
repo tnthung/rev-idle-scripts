@@ -373,16 +373,21 @@ export class Timer {
 
   constructor() {
     (async () => {
-      let lastTickAt = Date.now();
-      while (this.running) {
-        const now = Date.now();
-        const delta = now - lastTickAt;
+      try {
+        let lastTickAt = Date.now();
+        while (this.running) {
+          const now = Date.now();
+          const delta = now - lastTickAt;
 
-        if (delta <= Timer.PAUSE_THRESHOLD)
-          this.elapsed += delta;
-        lastTickAt = now;
+          if (delta <= Timer.PAUSE_THRESHOLD)
+            this.elapsed += delta;
+          lastTickAt = now;
 
-        await rev.sleep(Timer.MIN_TICK_INTERVAL);
+          await rev.sleep(Timer.MIN_TICK_INTERVAL);
+        }
+      } catch (err) {
+        console.error("Timer encountered an error:", err);
+        this.running = false;
       }
     })()
   }
