@@ -368,11 +368,11 @@ export class Timer {
   static PAUSE_THRESHOLD = 200;
   static MIN_TICK_INTERVAL = 10;
 
-  private running: boolean = true;
+  private running: boolean = false;
   private elapsed: number = 0;
 
-  constructor() {
-    this.restart();
+  constructor(createStopped = false) {
+    if (!createStopped) this.restart();
   }
 
   getElapsed(): number {
