@@ -236,7 +236,7 @@ export class BigNum {
   static NEGLIGIBLE_THRESHOLD = 15;
 
 
-  private man: number = 0;
+  private man: bigint = 0n;
   private exp: bigint = 0n;
 
   static ZERO = new this(0);
@@ -250,10 +250,8 @@ export class BigNum {
     }
 
     if (typeof value === "number") {
-      this.man = value;
-      this.exp = 0n;
-      this.normalize();
-      return;
+      if (!Number.isFinite(value)) throw new Error(`Invalid mantissa: ${value}`);
+      return new BigNum(value.toString());
     }
 
     if (typeof value === "bigint") {
@@ -262,39 +260,20 @@ export class BigNum {
 
     if (typeof value === "string") {
       let [man, exp="0", ...rest1] = value.split("e").map(part => part.trim());
-      if ((rest1 != null && rest1.length > 0) || !isStringNumeric(man) || (exp != null && !isStringNumeric(exp)))
+      if ((rest1 != null && rest1.length > 0)
+        || !/^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(man)
+        || !/^[+-]?\d+$/.test(exp))
         throw new Error(`Invalid number format: ${value}`);
 
-      this.exp = BigInt(exp);
-
-      let [d, f="0"] = man.split(".");
-
-      const neg = d[0] === "-";
-      if (neg) d = d.slice(1);
-
-      d = d.replace(/^0*/, "") || "0";
-      f = f.replace(/0*$/, "") || "0";
-
-      if (d.length > 1) {
-        this.exp += BigInt(d.length - 1);
-        f = d.slice(1) + f;
-        d = d[0];
-      }
-
-      if (d === "0") {
-        const firstDigit = f.search(/[1-9]/);
-        if (firstDigit >= 0) {
-          this.exp -= BigInt(firstDigit + 1);
-          d = f[firstDigit];
-          f = f.slice(firstDigit + 1);
-        }
-      }
-
-      if (f.length > BigNum.NEGLIGIBLE_THRESHOLD)
-        f = f.slice(0, BigNum.NEGLIGIBLE_THRESHOLD);
-
-      this.man = Number(`${neg ? "-" : ""}${d}.${f}`)
-      this.normalize();
+      const neg = man[0] === "-";
+      if (neg || man[0] === "+") man = man.slice(1);
+      const [d, f=""] = man.split(".");
+      const digits = (d + f).replace(/^0+/, "");
+      if (digits === "") return;
+      this.exp = BigInt(exp) + BigInt(d.length - (d + f).search(/[1-9]/) - 1);
+      const significant = digits.slice(0, 16);
+      this.man = BigInt(significant) * 10n ** BigInt(16 - significant.length);
+      if (neg) this.man = -this.man;
       return;
     }
 
@@ -302,20 +281,24 @@ export class BigNum {
   }
 
   private normalize() {
-    if (this.man === 0) {
+    if (this.man === 0n) {
       this.exp = 0n;
       return;
     }
 
-    if (!Number.isFinite(this.man))
-      throw new Error(`Invalid mantissa: ${this.man}`);
-
-    const [man, exp] = this.man.toExponential().split("e");
-    this.man = Number(man);
-    this.exp += BigInt(exp);
+    const negative = this.man < 0n;
+    let digits = (negative ? -this.man : this.man).toString();
+    if (digits.length > 16) {
+      this.exp += BigInt(digits.length - 16);
+      digits = digits.slice(0, 16);
+    } else if (digits.length < 16) {
+      this.exp -= BigInt(16 - digits.length);
+      digits = digits.padEnd(16, "0");
+    }
+    this.man = BigInt(digits) * (negative ? -1n : 1n);
   }
 
-  private fromParts(man: number, exp: bigint) {
+  private fromParts(man: bigint, exp: bigint) {
     const ret = new BigNum(0);
     ret.man = man;
     ret.exp = exp;
@@ -323,21 +306,24 @@ export class BigNum {
     return ret;
   }
 
-  get mantissa(): number  { return this.man; }
+  get mantissa(): number  {
+    const digits = (this.man < 0n ? -this.man : this.man).toString().padStart(16, "0");
+    return Number(`${this.man < 0n ? "-" : ""}${digits[0]}.${digits.slice(1)}`);
+  }
   get exponent(): bigint  { return this.exp; }
-  get isZero():   boolean { return this.man === 0; }
-  get isNeg():    boolean { return this.man < 0; }
+  get isZero():   boolean { return this.man === 0n; }
+  get isNeg():    boolean { return this.man < 0n; }
   get isPos():    boolean { return !this.isNeg; }
 
   cmp(other: BigNum | number | bigint): -1 | 0 | 1 {
     other = new BigNum(other);
 
     if (this.isZero || other.isZero || this.isNeg !== other.isNeg)
-      return Math.sign(this.man - other.man) as -1 | 0 | 1;
+      return this.man < other.man ? -1 : this.man > other.man ? 1 : 0;
 
     const expDiff = this.exp - other.exp;
     if (expDiff !== 0n) return (expDiff > 0 ? 1 : -1) * (this.isNeg ? -1 : 1) as -1 | 0 | 1;
-    return Math.sign(this.man - other.man) as -1 | 0 | 1;
+    return this.man < other.man ? -1 : this.man > other.man ? 1 : 0;
   }
 
   lt (other: BigNum | number | bigint) { return this.cmp(other) <   0; }
@@ -362,7 +348,7 @@ export class BigNum {
 
   sign() { return this.isZero ? 0 : this.isNeg ? -1 : 1; }
   neg()  { return this.fromParts(-this.man, this.exp); }
-  abs()  { return this.fromParts(Math.abs(this.man), this.exp); }
+  abs()  { return this.fromParts(this.man < 0n ? -this.man : this.man, this.exp); }
 
   add(other: BigNum | number | bigint) {
     other = new BigNum(other);
@@ -381,8 +367,8 @@ export class BigNum {
       return new BigNum(other);
 
     return this.fromParts(
-      this.man * Math.pow(10, Number(eA)) +
-      other.man * Math.pow(10, Number(eB)),
+      this.man * 10n ** eA +
+      other.man * 10n ** eB,
       baseE);
   }
 
@@ -403,8 +389,8 @@ export class BigNum {
       return other.neg();
 
     return this.fromParts(
-      this.man * Math.pow(10, Number(eA)) -
-      other.man * Math.pow(10, Number(eB)),
+      this.man * 10n ** eA -
+      other.man * 10n ** eB,
       baseE);
   }
 
@@ -412,14 +398,15 @@ export class BigNum {
     other = new BigNum(other);
     return this.fromParts(
       this.man * other.man,
-      this.exp + other.exp);
+      this.exp + other.exp - 15n);
   }
 
   div(other: BigNum | number | bigint) {
     other = new BigNum(other);
+    if (other.isZero) throw new Error("Division by zero");
     return this.fromParts(
-      this.man / other.man,
-      this.exp - other.exp);
+      this.man * 10n ** 16n / other.man,
+      this.exp - other.exp - 1n);
   }
 
   static sum(...values: BigNum[]) {
@@ -428,37 +415,32 @@ export class BigNum {
   }
 
   toString(manLen?: number): string {
+    const digits = (this.man < 0n ? -this.man : this.man).toString().padStart(16, "0");
+    const rendered = `${this.man < 0n ? "-" : ""}${digits[0]}.${digits.slice(1)}`.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
     if (manLen == null)
-      return `${this.man}e${this.exp}`;
+      return `${rendered}e${this.exp}`;
 
     if (manLen === 0)
       return `e${this.exp}`;
 
-    const man = this.man
-      .toString()
-      .slice(0, manLen)
-      .padEnd(manLen, "0");
-    return `${man}e${this.exp}`;
+    return `${rendered.slice(0, manLen).padEnd(manLen, "0")}e${this.exp}`;
   }
 
   toNumber(): number {
-    return this.man * Math.pow(10, Number(this.exp));
+    const digits = (this.man < 0n ? -this.man : this.man).toString().padStart(16, "0");
+    return Number(`${this.man < 0n ? "-" : ""}${digits[0]}.${digits.slice(1)}e${this.exp}`);
   }
 
   toInt(): number {
-    return Math.floor(this.toNumber());
+    return this.exp >= 15n ? this.toNumber() : Number(this.toBigInt());
   }
 
   toBigInt(): bigint {
-    if (this.exp < 0n) return this.isNeg ? -1n : 0n;
-
-    const [d, f = ""] = this.man.toString().split(".");
-    const man = BigInt(d + f);
-    const exp = this.exp - BigInt(f.length);
-    if (exp >= 0n) return man * 10n ** exp;
-
-    const divisor = 10n ** -exp;
-    return man / divisor - (man < 0n && man % divisor !== 0n ? 1n : 0n);
+    const shift = this.exp - 15n;
+    if (shift >= 0n) return this.man * 10n ** shift;
+    if (-shift > 16n) return this.isNeg ? -1n : 0n;
+    const divisor = 10n ** -shift;
+    return this.man / divisor - (this.man < 0n && this.man % divisor !== 0n ? 1n : 0n);
   }
 }
 
