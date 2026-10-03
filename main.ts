@@ -16,7 +16,7 @@ type Extension = {
 
 
 export const EXTENSION_REGISTRY: Record<string, Extension> = {
-
+  mineral_maintenance_v0: await import("./ext/mineral_maintenance.ts"),
 };
 
 
