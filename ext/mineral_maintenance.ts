@@ -180,7 +180,7 @@ async function mergeCommonMinerals(so: ScreenScopeGuard) {
 
 
 const REFINE_POLISH_THRESHOLD = 100;
-const REFINE_PRESTIGE_SPAWN_TIMEOUT = 1000 * 5;
+const REFINE_PRESTIGE_SPAWN_TIMEOUT = 1000 * 1.5;
 
 async function refinePrestige(so: ScreenScopeGuard) {
   if (commonMineralSpawnTimer.getElapsed() < REFINE_PRESTIGE_SPAWN_TIMEOUT) return;
@@ -195,7 +195,7 @@ async function refinePrestige(so: ScreenScopeGuard) {
 }
 
 
-const POLISH_PRESTIGE_SPAWN_TIMEOUT = 1000 * 5;
+const POLISH_PRESTIGE_SPAWN_TIMEOUT = 1000 * 1.5;
 
 const WEAPON_UPGRADES_TO_BUY = [
   PolishUpgradeType.Sword,
