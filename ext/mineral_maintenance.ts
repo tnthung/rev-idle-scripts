@@ -109,6 +109,7 @@ export async function onLoad() {
 export async function onUnload() {
   rev.daemon("mineralElapsedClock", null);
   rev.ui("mineralElapsedClock", null);
+  rev.ui("mineralMaintenanceToggle", null);
 }
 
 export async function onPoll() {
