@@ -77,7 +77,7 @@ export async function onLoad() {
     }
   })();
 
-  rev.ui("mineralMaintenanceToggle", {
+  monitorHover(rev.ui("mineralMaintenanceToggle", {
     basedOn: MINERAL_SLOT_VIEW,
     posX: 0,
     posY: -50,
@@ -96,11 +96,7 @@ export async function onLoad() {
   }).setOnClick(async function() {
     this.states.enabled = !this.states.enabled;
     await mineralMaintenanceEnabled.set(this.states.enabled);
-  }).setOnHover(async function() {
-    this.states.hover = true;
-  }).setOnLeave(async function() {
-    this.states.hover = false;
-  }).update();
+  })).update();
 }
 
 
@@ -271,4 +267,10 @@ async function maxCommonMineralLevel() {
 async function minCommonMineralLevel() {
   const commonMinerals = await States.commonMinerals();
   return BigNum.min(...Object.values(commonMinerals).map(m => m.level), new BigNum("1e100"));
+}
+
+function monitorHover<E extends RevUiElement<{ hover: boolean }>>(e: E): E {
+  return e
+    .setOnHover(async function() { this.states.hover = true; })
+    .setOnLeave(async function() { this.states.hover = false; }) as E;
 }
