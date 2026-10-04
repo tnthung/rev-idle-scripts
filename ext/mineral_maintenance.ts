@@ -341,7 +341,6 @@ async function polishPrestige(so: ScreenScopeGuard) {
 
   await Action.unity.minerals.polish.close().catch(() => {});
   await rev.sleep(100);
-  resetMineralTimers();
 }
 
 
