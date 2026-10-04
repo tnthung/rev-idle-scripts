@@ -133,7 +133,6 @@ export async function onLoad() {
   }).setOnStateUpdate(async function() {
     this.text = (await refinePrestigeThreshold.getOrSet(DEFAULT_REFINE_PRESTIGE_THRESHOLD)).toString() + "lvl";
     this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
-    await rev.sleep(100);
     await repositionPrestigeButtons();
   }).setOnClick(async function() {
     await refinePrestigeThreshold.set(DEFAULT_REFINE_PRESTIGE_THRESHOLD);
