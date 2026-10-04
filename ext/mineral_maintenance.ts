@@ -297,7 +297,6 @@ export async function onPoll() {
   await refineNode22Bought.set(refineNode22.Bought);
 
   await screenScope("Mineral Maintenance", async so => {
-    await adjustCommonMineralSpawnLevel(so);
     await mergeCommonMinerals(so);
     await refinePrestige(so);
     await polishPrestige(so);
@@ -359,6 +358,7 @@ async function spawnCommonMinerals(so: ScreenScopeGuard) {
 
 async function mergeCommonMinerals(so: ScreenScopeGuard) {
   while (true) {
+    await adjustCommonMineralSpawnLevel(so);
     await spawnCommonMinerals(so);
 
     const buckets = {} as Record<string, number[]>;
