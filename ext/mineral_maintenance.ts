@@ -22,20 +22,29 @@ declare const rev: Readonly<RevWithUi<{
     hover: boolean;
     enabled: boolean;
   };
+
   refinePrestigeSub10: { hover: boolean },
   refinePrestigeSub1: { hover: boolean },
   refinePrestigeLevel: { hover: boolean },
   refinePrestigeAdd1: { hover: boolean },
   refinePrestigeAdd10: { hover: boolean },
+
+  prestigeSpawnTimeoutSub1: { hover: boolean },
+  prestigeSpawnTimeoutSub01: { hover: boolean },
+  prestigeSpawnTimeout: { hover: boolean },
+  prestigeSpawnTimeoutAdd01: { hover: boolean },
+  prestigeSpawnTimeoutAdd1: { hover: boolean },
 }>>;
 
 export const MINERAL_SLOT_VIEW = "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_left[1]/ctn_minerals[1]/views[0]/scrollview_common[0]/viewport[0]";
 export const DEFAULT_REFINE_PRESTIGE_THRESHOLD = 100;
+export const DEFAULT_PRESTIGE_SPAWN_TIMEOUT = 1500;
 
 const DEFAULT_BUTTON_STYLE = {
   basedOn: MINERAL_SLOT_VIEW,
   posX: 0,
   posY: -50,
+  lenY: 25,
   corner: { radius: 5 },
   font: "Consolas",
   padding: { thickness: 5 },
@@ -44,6 +53,7 @@ const DEFAULT_BUTTON_STYLE = {
 export const mineralMaintenanceEnabled = new GlobalVar<boolean>("mineralMaintenanceEnabled");
 export const refineNode22Bought        = new GlobalVar<boolean>("refineNode22Bought");
 export const refinePrestigeThreshold   = new GlobalVar<number>("refinePrestigeThreshold");
+export const prestigeSpawnTimeout      = new GlobalVar<number>("prestigeSpawnTimeout");
 
 export const BUTTON_RED   = [199, 69, 57] as const;
 export const BUTTON_GREEN = [31, 138, 74] as const;
@@ -95,82 +105,10 @@ export async function onLoad() {
     }
   })();
 
-  monitorHover(rev.ui("refinePrestigeSub10", {
-    ...DEFAULT_BUTTON_STYLE,
-    posY: -50,
-    color: BUTTON_BLUE,
-    text: "-10",
-    states: { hover: false },
-  }).setOnStateUpdate(function() {
-    this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
-  }).setOnClick(async function() {
-    await refinePrestigeThreshold.update(v =>
-      ((v ?? DEFAULT_REFINE_PRESTIGE_THRESHOLD) - 10));
-    rev.ui.refinePrestigeLevel?.update();
-  })).update();
-
-  monitorHover(rev.ui("refinePrestigeSub1", {
-    ...DEFAULT_BUTTON_STYLE,
-    posY: -50,
-    color: BUTTON_BLUE,
-    text: "-1",
-    states: { hover: false },
-  }).setOnStateUpdate(function() {
-    this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
-  }).setOnClick(async function() {
-    await refinePrestigeThreshold.update(v =>
-      ((v ?? DEFAULT_REFINE_PRESTIGE_THRESHOLD) - 1));
-    rev.ui.refinePrestigeLevel?.update();
-  })).update();
-
-  monitorHover(rev.ui("refinePrestigeLevel", {
-    ...DEFAULT_BUTTON_STYLE,
-    posY: -50,
-    lenX: { min: 60 },
-    alignX: "center",
-    color: BUTTON_BLUE,
-    states: { hover: false },
-  }).setOnStateUpdate(async function() {
-    this.text = (await refinePrestigeThreshold.getOrSet(DEFAULT_REFINE_PRESTIGE_THRESHOLD)).toString() + "lvl";
-    this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
-    await repositionPrestigeButtons();
-  }).setOnClick(async function() {
-    await refinePrestigeThreshold.set(DEFAULT_REFINE_PRESTIGE_THRESHOLD);
-    this.update();
-  })).update();
-
-  monitorHover(rev.ui("refinePrestigeAdd1", {
-    ...DEFAULT_BUTTON_STYLE,
-    posY: -50,
-    color: BUTTON_BLUE,
-    text: "+1",
-    states: { hover: false },
-  }).setOnStateUpdate(function() {
-    this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
-  }).setOnClick(async function() {
-    await refinePrestigeThreshold.update(v =>
-      ((v ?? DEFAULT_REFINE_PRESTIGE_THRESHOLD) + 1));
-    rev.ui.refinePrestigeLevel?.update();
-  })).update();
-
-  monitorHover(rev.ui("refinePrestigeAdd10", {
-    ...DEFAULT_BUTTON_STYLE,
-    posY: -50,
-    color: BUTTON_BLUE,
-    text: "+10",
-    states: { hover: false },
-  }).setOnStateUpdate(function() {
-    this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
-  }).setOnClick(async function() {
-    await refinePrestigeThreshold.update(v =>
-      ((v ?? DEFAULT_REFINE_PRESTIGE_THRESHOLD) + 10));
-    rev.ui.refinePrestigeLevel?.update();
-  })).update();
-
   monitorHover(rev.ui("mineralMaintenanceToggle", {
     ...DEFAULT_BUTTON_STYLE,
     posX: 0,
-    posY: -50,
+    posY: -112,
     states: {
       hover: false,
       enabled: await mineralMaintenanceEnabled.getOrSet(false),
@@ -180,11 +118,154 @@ export async function onLoad() {
     this.text = this.states.enabled ? "Enabled" : "Disabled";
     if (this.states.hover) this.border = { color: this.states.enabled ? BORDER_GREEN : BORDER_RED, thickness: 2 };
     else delete this.border;
-    rev.ui.refinePrestigeLevel?.update();
   }).setOnClick(async function() {
     this.states.enabled = !this.states.enabled;
     await mineralMaintenanceEnabled.set(this.states.enabled);
   })).update();
+
+  const DEFAULT_REFINE_PRESTIGE_LEVEL_STYLE = {
+    ...DEFAULT_BUTTON_STYLE,
+    posY: -80,
+    lenX: 40,
+    color: BUTTON_BLUE,
+    alignX: "center",
+  } as const;
+
+  { // Refine Prestige Level Buttons
+    monitorHover(rev.ui("refinePrestigeSub10", {
+      ...DEFAULT_REFINE_PRESTIGE_LEVEL_STYLE,
+      text: "-10",
+      states: { hover: false },
+    }).setOnStateUpdate(function() {
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+    }).setOnClick(async function() {
+      await refinePrestigeThreshold.update(v =>
+        ((v ?? DEFAULT_REFINE_PRESTIGE_THRESHOLD) - 10));
+      rev.ui.refinePrestigeLevel?.update();
+    })).update();
+
+    monitorHover(rev.ui("refinePrestigeSub1", {
+      ...DEFAULT_REFINE_PRESTIGE_LEVEL_STYLE,
+      text: "-1",
+      states: { hover: false },
+    }).setOnStateUpdate(function() {
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+    }).setOnClick(async function() {
+      await refinePrestigeThreshold.update(v =>
+        ((v ?? DEFAULT_REFINE_PRESTIGE_THRESHOLD) - 1));
+      rev.ui.refinePrestigeLevel?.update();
+    })).update();
+
+    monitorHover(rev.ui("refinePrestigeAdd1", {
+      ...DEFAULT_REFINE_PRESTIGE_LEVEL_STYLE,
+      text: "+1",
+      states: { hover: false },
+    }).setOnStateUpdate(function() {
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+    }).setOnClick(async function() {
+      await refinePrestigeThreshold.update(v =>
+        ((v ?? DEFAULT_REFINE_PRESTIGE_THRESHOLD) + 1));
+      rev.ui.refinePrestigeLevel?.update();
+    })).update();
+
+    monitorHover(rev.ui("refinePrestigeAdd10", {
+      ...DEFAULT_REFINE_PRESTIGE_LEVEL_STYLE,
+      text: "+10",
+      states: { hover: false },
+    }).setOnStateUpdate(function() {
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+    }).setOnClick(async function() {
+      await refinePrestigeThreshold.update(v =>
+        ((v ?? DEFAULT_REFINE_PRESTIGE_THRESHOLD) + 10));
+      rev.ui.refinePrestigeLevel?.update();
+    })).update();
+
+    monitorHover(rev.ui("refinePrestigeLevel", {
+      ...DEFAULT_REFINE_PRESTIGE_LEVEL_STYLE,
+      lenX: { min: 80 },
+      alignX: "center",
+      states: { hover: false },
+    }).setOnStateUpdate(async function() {
+      this.text = (await refinePrestigeThreshold.getOrSet(DEFAULT_REFINE_PRESTIGE_THRESHOLD)).toString() + "lvl";
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+      await repositionPrestigeLevelButtons();
+    }).setOnClick(async function() {
+      await refinePrestigeThreshold.set(DEFAULT_REFINE_PRESTIGE_THRESHOLD);
+      this.update();
+    })).update();
+  }
+
+  const DEFAULT_SPAWN_TIMEOUT_STYLE = {
+    ...DEFAULT_BUTTON_STYLE,
+    posY: -50,
+    lenX: 40,
+    color: BUTTON_BLUE,
+    alignX: "center",
+  } as const;
+
+  { // Prestige Spawn Timeout Buttons
+    monitorHover(rev.ui("prestigeSpawnTimeoutSub1", {
+      ...DEFAULT_SPAWN_TIMEOUT_STYLE,
+      text: "-1",
+      states: { hover: false },
+    }).setOnStateUpdate(function() {
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+    }).setOnClick(async function() {
+      await prestigeSpawnTimeout.update(v =>
+        Math.max(0, (v ?? DEFAULT_PRESTIGE_SPAWN_TIMEOUT) - 1000));
+      rev.ui.prestigeSpawnTimeout?.update();
+    })).update();
+
+    monitorHover(rev.ui("prestigeSpawnTimeoutSub01", {
+      ...DEFAULT_SPAWN_TIMEOUT_STYLE,
+      text: "-0.1",
+      states: { hover: false },
+    }).setOnStateUpdate(function() {
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+    }).setOnClick(async function() {
+      await prestigeSpawnTimeout.update(v =>
+        Math.max(0, (v ?? DEFAULT_PRESTIGE_SPAWN_TIMEOUT) - 100));
+      rev.ui.prestigeSpawnTimeout?.update();
+    })).update();
+
+    monitorHover(rev.ui("prestigeSpawnTimeoutAdd01", {
+      ...DEFAULT_SPAWN_TIMEOUT_STYLE,
+      text: "+0.1",
+      states: { hover: false },
+    }).setOnStateUpdate(function() {
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+    }).setOnClick(async function() {
+      await prestigeSpawnTimeout.update(v =>
+        (v ?? DEFAULT_PRESTIGE_SPAWN_TIMEOUT) + 100);
+      rev.ui.prestigeSpawnTimeout?.update();
+    })).update();
+
+    monitorHover(rev.ui("prestigeSpawnTimeoutAdd1", {
+      ...DEFAULT_SPAWN_TIMEOUT_STYLE,
+      text: "+1",
+      states: { hover: false },
+    }).setOnStateUpdate(function() {
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+    }).setOnClick(async function() {
+      await prestigeSpawnTimeout.update(v =>
+        (v ?? DEFAULT_PRESTIGE_SPAWN_TIMEOUT) + 1000);
+      rev.ui.prestigeSpawnTimeout?.update();
+    })).update();
+
+    monitorHover(rev.ui("prestigeSpawnTimeout", {
+      ...DEFAULT_SPAWN_TIMEOUT_STYLE,
+      lenX: { min: 80 },
+      alignX: "center",
+      states: { hover: false },
+    }).setOnStateUpdate(async function() {
+      this.text = ((await prestigeSpawnTimeout.getOrSet(DEFAULT_PRESTIGE_SPAWN_TIMEOUT)) / 1000).toFixed(1) + "s";
+      this.color = this.states.hover ? HOVER_BLUE : BUTTON_BLUE;
+      await repositionPrestigeSpawnTimeoutButtons();
+    }).setOnClick(async function() {
+      await prestigeSpawnTimeout.set(DEFAULT_PRESTIGE_SPAWN_TIMEOUT);
+      this.update();
+    })).update();
+  }
 }
 
 
@@ -197,6 +278,11 @@ export async function onUnload() {
   rev.ui("refinePrestigeLevel", null);
   rev.ui("refinePrestigeAdd1", null);
   rev.ui("refinePrestigeAdd10", null);
+  rev.ui("prestigeSpawnTimeoutSub1", null);
+  rev.ui("prestigeSpawnTimeoutSub01", null);
+  rev.ui("prestigeSpawnTimeout", null);
+  rev.ui("prestigeSpawnTimeoutAdd01", null);
+  rev.ui("prestigeSpawnTimeoutAdd1", null);
 }
 
 export async function onPoll() {
@@ -295,10 +381,8 @@ async function mergeCommonMinerals(so: ScreenScopeGuard) {
 }
 
 
-const REFINE_PRESTIGE_SPAWN_TIMEOUT = 1000 * 1.5;
-
 async function refinePrestige(so: ScreenScopeGuard) {
-  if (commonMineralSpawnTimer.getElapsed() < REFINE_PRESTIGE_SPAWN_TIMEOUT) return;
+  if (commonMineralSpawnTimer.getElapsed() < await prestigeSpawnTimeout.getOrSet(DEFAULT_PRESTIGE_SPAWN_TIMEOUT)) return;
   if ((await maxCommonMineralLevel()).lt(await refinePrestigeThreshold.getOrSet(DEFAULT_REFINE_PRESTIGE_THRESHOLD))) return;
 
   if (!await mineralMaintenanceEnabled.get()) return;
@@ -310,8 +394,6 @@ async function refinePrestige(so: ScreenScopeGuard) {
 }
 
 
-const POLISH_PRESTIGE_SPAWN_TIMEOUT = 1000 * 1.5;
-
 const WEAPON_UPGRADES_TO_BUY = [
   PolishUpgradeType.Sword,
   PolishUpgradeType.Knuckles,
@@ -321,7 +403,7 @@ const WEAPON_UPGRADES_TO_BUY = [
 ];
 
 async function polishPrestige(so: ScreenScopeGuard) {
-  if (commonMineralSpawnTimer.getElapsed() < POLISH_PRESTIGE_SPAWN_TIMEOUT) return;
+  if (commonMineralSpawnTimer.getElapsed() < await prestigeSpawnTimeout.getOrSet(DEFAULT_PRESTIGE_SPAWN_TIMEOUT)) return;
   if ((await maxCommonMineralLevel()).gte(await refinePrestigeThreshold.getOrSet(DEFAULT_REFINE_PRESTIGE_THRESHOLD))) return;
 
   if (!await mineralMaintenanceEnabled.get()) return;
@@ -366,10 +448,8 @@ function monitorHover<E extends RevUiElement<{ hover: boolean }>>(e: E): E {
     .setOnLeave(async function() { this.states.hover = false; }) as E;
 }
 
-export async function repositionPrestigeButtons() {
-  const [toggleX, toggleWidth, ...buttonWidths] = await Promise.all([
-    rev.ui.mineralMaintenanceToggle?.globalXPos(MINERAL_SLOT_VIEW).then(v => v[0]),
-    rev.ui.mineralMaintenanceToggle?.width(),
+export async function repositionPrestigeLevelButtons() {
+  const buttonWidths = await Promise.all([
     rev.ui.refinePrestigeSub10?.width().then(v => ["refinePrestigeSub10", v] as const),
     rev.ui.refinePrestigeSub1 ?.width().then(v => ["refinePrestigeSub1",  v] as const),
     rev.ui.refinePrestigeLevel?.width().then(v => ["refinePrestigeLevel", v] as const),
@@ -377,14 +457,31 @@ export async function repositionPrestigeButtons() {
     rev.ui.refinePrestigeAdd10?.width().then(v => ["refinePrestigeAdd10", v] as const),
   ]);
 
-  let start = (toggleX != null && toggleWidth != null) ? toggleX + toggleWidth : 0;
+  let start = 0;
   for (const button of buttonWidths!) {
     if (!button) continue;
     const [eleName, width] = button;
 
-    start += 5; // 5px gap before positioning the next button
-    if (rev.ui[eleName])
-      rev.ui[eleName].posX = Math.ceil(start);
-    start += width;
+    if (rev.ui[eleName]) rev.ui[eleName].posX = Math.ceil(start);
+    start += width + 5; // 5px gap after positioning the next button
+  }
+}
+
+export async function repositionPrestigeSpawnTimeoutButtons() {
+  const buttonWidths = await Promise.all([
+    rev.ui.prestigeSpawnTimeoutSub1 ?.width().then(v => ["prestigeSpawnTimeoutSub1",  v] as const),
+    rev.ui.prestigeSpawnTimeoutSub01?.width().then(v => ["prestigeSpawnTimeoutSub01", v] as const),
+    rev.ui.prestigeSpawnTimeout     ?.width().then(v => ["prestigeSpawnTimeout",      v] as const),
+    rev.ui.prestigeSpawnTimeoutAdd01?.width().then(v => ["prestigeSpawnTimeoutAdd01", v] as const),
+    rev.ui.prestigeSpawnTimeoutAdd1 ?.width().then(v => ["prestigeSpawnTimeoutAdd1",  v] as const),
+  ]);
+
+  let start = 0;
+  for (const button of buttonWidths!) {
+    if (!button) continue;
+    const [eleName, width] = button;
+
+    if (rev.ui[eleName]) rev.ui[eleName].posX = Math.ceil(start);
+    start += width + 5; // 5px gap after positioning the next button
   }
 }
