@@ -20,7 +20,7 @@ declare const rev: Readonly<RevWithUi<{
   };
   mineralMaintenanceToggle: {
     hover: boolean;
-    enabled: boolean | null;
+    enabled: boolean;
   };
 }>>;
 
@@ -34,6 +34,7 @@ export const BUTTON_RED   = [199, 69, 57] as const;
 export const BUTTON_GREEN = [31, 138, 74] as const;
 export const BORDER_RED   = Color.fromRgb(BUTTON_RED).brightness(0.7).toRgb();
 export const BORDER_GREEN = Color.fromRgb(BUTTON_GREEN).brightness(0.7).toRgb();
+
 
 const mineralLoopTimer        = new Timer(true);
 const commonMineralSpawnTimer = new Timer(true);
@@ -85,7 +86,7 @@ export async function onLoad() {
     padding: { thickness: 5 },
     states: {
       hover: false,
-      enabled: null,
+      enabled: await mineralMaintenanceEnabled.getOrSet(false),
     },
   }).setOnStateUpdate(function() {
     this.color = this.states.enabled ? BUTTON_GREEN : BUTTON_RED;
@@ -99,10 +100,7 @@ export async function onLoad() {
     this.states.hover = true;
   }).setOnLeave(async function() {
     this.states.hover = false;
-  });
-
-  rev.ui.mineralMaintenanceToggle!.states.enabled =
-    await mineralMaintenanceEnabled.getOrSet(false);
+  }).update();
 }
 
 
