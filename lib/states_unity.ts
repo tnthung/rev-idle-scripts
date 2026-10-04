@@ -1,5 +1,4 @@
 // cspell:ignore eters Mult Mults sacri showable
-import { BigNum } from "./utils.ts";
 
 
 export class States {
@@ -9,43 +8,43 @@ export class States {
   }
 
   static async infinities() {
-    return new BigNum(await rev.state<string>("gameData.infinity.infs"));
+    return await rev.state<BigNum>("gameData.infinity.infs");
   }
 
   static async eternities() {
-    return new BigNum(await rev.state<string>("gameData.eternity.eters"));
+    return await rev.state<BigNum>("gameData.eternity.eters");
   }
 
   static async unities() {
-    return new BigNum(await rev.state<string>("gameData.unity.unities"));
+    return await rev.state<BigNum>("gameData.unity.unities");
   }
 
   static async currentIP() {
-    return new BigNum(await rev.state<string>("IP"));
+    return await rev.state<BigNum>("IP");
   }
 
   static async currentEP() {
-    return new BigNum(await rev.state<string>("EP"));
+    return await rev.state<BigNum>("EP");
   }
 
   static async currentDP() {
-    return new BigNum(await rev.state<string>("gameData.eternity.DP"));
+    return await rev.state<BigNum>("gameData.eternity.DP");
   }
 
   static async currentGold() {
-    return new BigNum(await rev.state<string>("gameData.attacks.gold"));
+    return await rev.state<BigNum>("gameData.attacks.gold");
   }
 
   static async nextIP() {
-    return new BigNum(await rev.state<string>("nextIP"));
+    return await rev.state<BigNum>("nextIP");
   }
 
   static async nextEP() {
-    return new BigNum(await rev.state<string>("nextEP"));
+    return await rev.state<BigNum>("nextEP");
   }
 
   static async nextGold() {
-    return new BigNum(await rev.state<string>("gameData.attacks.goldOnUnity"));
+    return await rev.state<BigNum>("gameData.attacks.goldOnUnity");
   }
 
   static async supernovaLevel() {
@@ -53,11 +52,11 @@ export class States {
   }
 
   static async totalAP() {
-    return new BigNum(await rev.state<string>("gameData.eternity.APbought"));
+    return await rev.state<BigNum>("gameData.eternity.APbought");
   }
 
   static async DilationMaxScore() {
-    return new BigNum(await rev.state<string>("dilationMaxScore"));
+    return await rev.state<BigNum>("dilationMaxScore");
   }
 
   static async inDilation() {
@@ -77,7 +76,7 @@ export class States {
   }
 
   static async unityLevel() {
-    return new BigNum(await rev.state<string>("unityLevel"));
+    return await rev.state<BigNum>("unityLevel");
   }
 
   static async unityZodiacInventory(): Promise<Record<string, UnityZodiac>> {
@@ -104,7 +103,7 @@ export class States {
   }
 
   static async currentAttackDamage() {
-    return new BigNum(await rev.state<string>("gameData.attacks.totalAtkMult"));
+    return await rev.state<BigNum>("gameData.attacks.totalAtkMult");
   }
 
   static async eternalChallenge(n: number) {
@@ -142,9 +141,9 @@ export class States {
     const values = await rev.state(...indexes.flatMap(index => [
       `gameData.attacks.revolutions.${index}.IsActive`,
       `gameData.attacks.revolutions.${index}.mult`,
-    ])) as Readonly<Record<string, boolean | string>>;
+    ])) as Readonly<Record<string, boolean | BigNum>>;
     return indexes.map(index => values[`gameData.attacks.revolutions.${index}.IsActive`]
-      ? new BigNum(values[`gameData.attacks.revolutions.${index}.mult`] as string)
+      ? values[`gameData.attacks.revolutions.${index}.mult`] as BigNum
       : null);
   }
 
@@ -153,9 +152,9 @@ export class States {
     const values = await rev.state(...indexes.flatMap(index => [
       `gameData.attacks.revolutions.${index}.IsActive`,
       `gameData.attacks.revolutions.${index}.progress`,
-    ])) as Readonly<Record<string, boolean | string>>;
+    ])) as Readonly<Record<string, boolean | BigNum>>;
     return indexes.map(index => values[`gameData.attacks.revolutions.${index}.IsActive`]
-      ? new BigNum(values[`gameData.attacks.revolutions.${index}.progress`] as string)
+      ? values[`gameData.attacks.revolutions.${index}.progress`] as BigNum
       : null);
   }
 
@@ -164,23 +163,23 @@ export class States {
   }
 
   static async maxAttackLevelReached() {
-    return Number(await rev.state<string>("gameData.attacks.maxLevelReached"));
+    return (await rev.state<BigNum>("gameData.attacks.maxLevelReached")).toNumber();
   }
 
   static async currentMineralLevel() {
-    return new BigNum(await rev.state<string>("gameData.minerals.curMineralLevel"));
+    return await rev.state<BigNum>("gameData.minerals.curMineralLevel");
   }
 
   static async currentMineralCost() {
-    return new BigNum(await rev.state<string>("gameData.minerals.curMineralCost"));
+    return await rev.state<BigNum>("gameData.minerals.curMineralCost");
   }
 
   static async minMineralCost() {
-    return new BigNum(await rev.state<string>("gameData.minerals.minMineralCost"));
+    return await rev.state<BigNum>("gameData.minerals.minMineralCost");
   }
 
   static async maxMineralLevel() {
-    return new BigNum(await rev.state<string>("gameData.minerals.maxMineralLevel"));
+    return await rev.state<BigNum>("gameData.minerals.maxMineralLevel");
   }
 
   static async commonMinerals() {
@@ -212,13 +211,13 @@ export type EternalChallengeData = {
   KeyName: string;
   completeDiff: number;
   curDiff: number;
-  goal: string; // BigDouble
+  goal: BigNum;
   inChallenge: boolean;
   Unlocked: boolean;
   num: number;
-  penalty: string; // BigDouble
-  reward: string; // BigDouble
-  rewardPenaltyIT4: string; // BigDouble
+  penalty: BigNum;
+  reward: BigNum;
+  rewardPenaltyIT4: BigNum;
   startFrom: keyof typeof StartFromEnum;
 }
 
@@ -243,13 +242,13 @@ export type UnityZodiacData = {
   RangeOffset: number;
   Season: keyof typeof ZodiacSeason;
   hasPlanet: boolean;
-  level: string; // BigDouble
+  level: BigNum;
   locked: boolean;
   planet: UnityPlanetData | null;
-  quality: string; // BigDouble
+  quality: BigNum;
   rarity: keyof typeof ZodiacRarity;
-  rarityPlus: string; // BigDouble
-  score: string; // BigDouble
+  rarityPlus: BigNum;
+  score: BigNum;
   sign: keyof typeof ZodiacSign;
   stats: ZodiacStatData[];
 }
@@ -292,13 +291,13 @@ export class UnityZodiac {
     this.RangeOffset = RangeOffset;
     this.Season = ZodiacSeason[Season];
     this.hasPlanet = hasPlanet;
-    this.level = new BigNum(level);
+    this.level = level;
     this.locked = locked;
     this.planet = planet;
-    this.quality = new BigNum(quality);
+    this.quality = quality;
     this.rarity = ZodiacRarity[rarity];
-    this.rarityPlus = Number(rarityPlus);
-    this.score = new BigNum(score);
+    this.rarityPlus = rarityPlus.toNumber();
+    this.score = score;
     this.sign = ZodiacSign[sign];
     this.stats = stats.map(stat => new ZodiacStat(stat));
     this.statMap = Object.fromEntries(this.stats.map(stat => [stat.type, stat.value]));
@@ -316,7 +315,7 @@ export class UnityZodiac {
 
 export type UnityPlanetData = {
   bonusType: keyof typeof PlanetStatType;
-  bonusValue: string; // BigDouble
+  bonusValue: BigNum;
   type: keyof typeof Planet;
   unlocked: boolean;
 }
@@ -330,7 +329,7 @@ export class UnityPlanet {
   constructor({ bonusType, bonusValue, type, unlocked }: UnityPlanetData) {
     this.bonusType = PlanetStatType[bonusType];
     if (this.bonusType == null) console.log(`planet stat type ${bonusType} is missing from the enum`);
-    this.bonusValue = new BigNum(bonusValue);
+    this.bonusValue = bonusValue;
     this.type = Planet[type];
     this.unlocked = unlocked;
   }
@@ -339,7 +338,7 @@ export class UnityPlanet {
 
 export type ZodiacStatData = {
   type: keyof typeof ZodiacStatType;
-  value: string; // BigDouble
+  value: BigNum;
 }
 
 export class ZodiacStat {
@@ -349,15 +348,15 @@ export class ZodiacStat {
   constructor({ type, value }: ZodiacStatData) {
     this.type = ZodiacStatType[type];
     if (type == null) console.error(`zodiac stat type ${type} is missing from the enum`);
-    this.value = new BigNum(value);
+    this.value = value;
   }
 }
 
 
 export type SacriStatData = {
   stat: keyof typeof ZodiacStatType;
-  value: string; // BigDouble
-  score: string; // BigDouble
+  value: BigNum;
+  score: BigNum;
   showable: boolean;
 }
 
@@ -370,18 +369,18 @@ export class SacriStat {
   constructor({ stat, value, score, showable }: SacriStatData) {
     this.type = ZodiacStatType[stat];
     if (stat == null) console.error(`sacri stat type ${stat} is missing from the enum`);
-    this.value = new BigNum(value);
-    this.score = new BigNum(score);
+    this.value = value;
+    this.score = score;
     this.showable = showable;
   }
 }
 
 
 export type AttackLevelData = {
-  currentHP: string; // BigDouble
-  goldGain: string; // BigDouble
-  level: string; // BigDouble
-  maxHP: string; // BigDouble
+  currentHP: BigNum;
+  goldGain: BigNum;
+  level: BigNum;
+  maxHP: BigNum;
   unlocked: boolean;
 }
 
@@ -393,28 +392,28 @@ export class AttackLevel {
   unlocked: boolean;
 
   constructor({ currentHP, goldGain, level, maxHP, unlocked }: AttackLevelData) {
-    this.currentHP = new BigNum(currentHP);
-    this.goldGain = new BigNum(goldGain);
-    this.level = Number(level);
-    this.maxHP = new BigNum(maxHP);
+    this.currentHP = currentHP;
+    this.goldGain = goldGain;
+    this.level = level.toNumber();
+    this.maxHP = maxHP;
     this.unlocked = unlocked;
   }
 }
 
 
 export type AttackRelicData = {
-  ReqLevel: string; // BigDouble
-  amount: string; // BigDouble
-  baseCost: string; // BigDouble
-  buyAmount: string; // BigDouble
-  costInc: string; // BigDouble
-  effect: string; // BigDouble
-  effect_next: string; // BigDouble
+  ReqLevel: BigNum;
+  amount: BigNum;
+  baseCost: BigNum;
+  buyAmount: BigNum;
+  costInc: BigNum;
+  effect: BigNum;
+  effect_next: BigNum;
   num: number;
-  regainedLevelsEst: string; // BigDouble
-  sacriEffect: string; // BigDouble
-  sacriLevel: string; // BigDouble
-  totalCost: string; // BigDouble
+  regainedLevelsEst: BigNum;
+  sacriEffect: BigNum;
+  sacriLevel: BigNum;
+  totalCost: BigNum;
   unlocked: boolean;
 }
 
@@ -448,33 +447,33 @@ export class AttackRelic {
     totalCost,
     unlocked,
   }: AttackRelicData) {
-    this.ReqLevel = new BigNum(ReqLevel);
-    this.amount = new BigNum(amount);
-    this.baseCost = new BigNum(baseCost);
-    this.buyAmount = new BigNum(buyAmount);
-    this.costInc = new BigNum(costInc);
-    this.effect = new BigNum(effect);
-    this.effect_next = new BigNum(effect_next);
-    this.num = Number(num);
-    this.regainedLevelsEst = new BigNum(regainedLevelsEst);
-    this.sacriEffect = new BigNum(sacriEffect);
-    this.sacriLevel = new BigNum(sacriLevel);
-    this.totalCost = new BigNum(totalCost);
+    this.ReqLevel = ReqLevel;
+    this.amount = amount;
+    this.baseCost = baseCost;
+    this.buyAmount = buyAmount;
+    this.costInc = costInc;
+    this.effect = effect;
+    this.effect_next = effect_next;
+    this.num = num;
+    this.regainedLevelsEst = regainedLevelsEst;
+    this.sacriEffect = sacriEffect;
+    this.sacriLevel = sacriLevel;
+    this.totalCost = totalCost;
     this.unlocked = unlocked;
   }
 }
 
 
 export type MineralsUpgradeData = {
-  buyAmount: string; // BigDouble
+  buyAmount: BigNum;
   canBuy: boolean;
-  cost: string; // BigDouble
-  effect: string; // BigDouble
-  effectNext: string; // BigDouble
-  income: string; // BigDouble
-  level: string; // BigDouble
+  cost: BigNum;
+  effect: BigNum;
+  effectNext: BigNum;
+  income: BigNum;
+  level: BigNum;
   Maxed: boolean;
-  maxLevel: string; // BigDouble
+  maxLevel: BigNum;
   type: keyof typeof MineralUpgradeType;
   Unlocked: boolean;
 }
@@ -505,15 +504,15 @@ export class MineralUpgrade {
     type,
     Unlocked,
   }: MineralsUpgradeData) {
-    this.buyAmount = new BigNum(buyAmount);
+    this.buyAmount = buyAmount;
     this.canBuy = canBuy;
-    this.cost = new BigNum(cost);
-    this.effect = new BigNum(effect);
-    this.effectNext = new BigNum(effectNext);
-    this.income = new BigNum(income);
-    this.level = new BigNum(level);
+    this.cost = cost;
+    this.effect = effect;
+    this.effectNext = effectNext;
+    this.income = income;
+    this.level = level;
     this.Maxed = Maxed;
-    this.maxLevel = new BigNum(maxLevel);
+    this.maxLevel = maxLevel;
     this.type = MineralUpgradeType[type];
     this.Unlocked = Unlocked;
   }
@@ -523,11 +522,11 @@ export class MineralUpgrade {
 export type CommonMineralData = {
   Desc: string;
   Id: number;
-  income: string; // BigDouble
+  income: BigNum;
   Name: string;
   KeyDesc: string;
   KeyName: string;
-  level: string; // BigDouble
+  level: BigNum;
 }
 
 export class CommonMineral {
@@ -547,22 +546,22 @@ export class CommonMineral {
     level,
   }: CommonMineralData) {
     this.Id = Id;
-    this.income = new BigNum(income);
+    this.income = income;
     this.Name = Name;
     this.KeyDesc = KeyDesc;
     this.KeyName = KeyName;
-    this.level = new BigNum(level);
+    this.level = level;
   }
 }
 
 
 export type PolishUpgradeData = {
-  buyAmount: string; // BigDouble
+  buyAmount: BigNum;
   CanBuy: boolean;
-  cost: string; // BigDouble
-  effect: string; // BigDouble
-  effectNext: string; // BigDouble
-  level: string; // BigDouble
+  cost: BigNum;
+  effect: BigNum;
+  effectNext: BigNum;
+  level: BigNum;
   milestones: Array<boolean>;
   type: keyof typeof PolishUpgradeType;
 }
@@ -587,12 +586,12 @@ export class PolishUpgrade {
     milestones,
     type,
   }: PolishUpgradeData) {
-    this.buyAmount = new BigNum(buyAmount);
+    this.buyAmount = buyAmount;
     this.CanBuy = CanBuy;
-    this.cost = new BigNum(cost);
-    this.effect = new BigNum(effect);
-    this.effectNext = new BigNum(effectNext);
-    this.level = new BigNum(level);
+    this.cost = cost;
+    this.effect = effect;
+    this.effectNext = effectNext;
+    this.level = level;
     this.milestones = milestones;
     this.type = PolishUpgradeType[type];
   }
@@ -600,15 +599,15 @@ export class PolishUpgrade {
 
 
 export type AttacksRevolutionBuyableData = {
-  allCost: string; // BigDouble
+  allCost: BigNum;
   amount: number;
-  baseCost: string; // BigDouble
+  baseCost: BigNum;
   buyAmount: number | "NaN" | "Infinity" | "-Infinity";
-  costInc: string; // BigDouble
+  costInc: BigNum;
   maxAmount: number;
   num: number;
   spendable: boolean;
-  totalCost: string; // BigDouble
+  totalCost: BigNum;
 };
 
 export class AttacksRevolutionBuyable {
@@ -633,15 +632,15 @@ export class AttacksRevolutionBuyable {
     spendable,
     totalCost,
   }: AttacksRevolutionBuyableData) {
-    this.allCost = new BigNum(allCost);
+    this.allCost = allCost;
     this.amount = amount;
-    this.baseCost = new BigNum(baseCost);
+    this.baseCost = baseCost;
     this.buyAmount = buyAmount;
-    this.costInc = new BigNum(costInc);
+    this.costInc = costInc;
     this.maxAmount = maxAmount;
     this.num = num;
     this.spendable = spendable;
-    this.totalCost = new BigNum(totalCost);
+    this.totalCost = totalCost;
   }
 }
 
@@ -649,22 +648,22 @@ export class AttacksRevolutionBuyable {
 export type AttacksRevolutionData = {
   amount: number | string;
   ascCooldown: boolean;
-  ascendPower: string; // BigDouble
+  ascendPower: BigNum;
   ascension: number | string;
   baseSpeed: number | "NaN" | "Infinity" | "-Infinity";
   CanAscend: boolean;
   CanPurchase: boolean;
-  damage: string; // BigDouble
-  dmgBaseMult: string; // BigDouble
-  dmgBaseMults: Array<string>; // BigDouble
-  dmgInitMult: string; // BigDouble
+  damage: BigNum;
+  dmgBaseMult: BigNum;
+  dmgBaseMults: Array<BigNum>;
+  dmgInitMult: BigNum;
   got: number | "NaN" | "Infinity" | "-Infinity";
   IsActive: boolean;
   IsUnlocked: boolean;
-  mult: string; // BigDouble
-  multGain: string; // BigDouble
+  mult: BigNum;
+  multGain: BigNum;
   num: number;
-  progress: string; // BigDouble
+  progress: BigNum;
   speed: number | "NaN" | "Infinity" | "-Infinity";
   speedNext: number | "NaN" | "Infinity" | "-Infinity";
   thisBuyable: AttacksRevolutionBuyableData;
@@ -718,22 +717,22 @@ export class AttacksRevolution {
   }: AttacksRevolutionData) {
     this.amount = amount;
     this.ascCooldown = ascCooldown;
-    this.ascendPower = new BigNum(ascendPower);
+    this.ascendPower = ascendPower;
     this.ascension = ascension;
     this.baseSpeed = baseSpeed;
     this.CanAscend = CanAscend;
     this.CanPurchase = CanPurchase;
-    this.damage = new BigNum(damage);
-    this.dmgBaseMult = new BigNum(dmgBaseMult);
-    this.dmgBaseMults = dmgBaseMults.map((v) => new BigNum(v));
-    this.dmgInitMult = new BigNum(dmgInitMult);
+    this.damage = damage;
+    this.dmgBaseMult = dmgBaseMult;
+    this.dmgBaseMults = dmgBaseMults;
+    this.dmgInitMult = dmgInitMult;
     this.got = got;
     this.IsActive = IsActive;
     this.IsUnlocked = IsUnlocked;
-    this.mult = new BigNum(mult);
-    this.multGain = new BigNum(multGain);
+    this.mult = mult;
+    this.multGain = multGain;
     this.num = num;
-    this.progress = new BigNum(progress);
+    this.progress = progress;
     this.speed = speed;
     this.speedNext = speedNext;
     this.thisBuyable = new AttacksRevolutionBuyable(thisBuyable);

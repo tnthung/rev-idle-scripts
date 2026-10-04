@@ -1,10 +1,10 @@
 import { UnityZodiac, UnityZodiacData, ZodiacElement, ZodiacRarity, ZodiacSeason, ZodiacSign, ZodiacStatType } from "./states_unity.ts";
-import { BigNum, GlobalVar } from "./utils.ts";
+import { GlobalVar } from "./utils.ts";
 
 
 const UnityHistories = new GlobalVar<{
   elapsedTime: number;
-  goldGained: string;
+  goldGained: BigNum;
   attackLevelReached: number;
   zodiacGot: UnityZodiacData,
 }[]>("unityHistories");
@@ -61,7 +61,7 @@ export class UnityHistory {
     return (UnityHistories.getUnguarded() ?? [])
       .map(history => new UnityHistory(
         history.elapsedTime,
-        new BigNum(history.goldGained),
+        history.goldGained,
         history.attackLevelReached,
         new UnityZodiac(history.zodiacGot)));
   }
@@ -76,7 +76,7 @@ export class UnityHistory {
       UnityHistory.histories
         ?.map(({ elapsedTime, goldGained, attackLevelReached, zodiacGot }) => ({
           elapsedTime,
-          goldGained: goldGained.toString(),
+          goldGained,
           attackLevelReached,
           zodiacGot: {
             Element: ZodiacElement[zodiacGot.Element] as keyof typeof ZodiacElement,
@@ -84,17 +84,17 @@ export class UnityHistory {
             RangeOffset: zodiacGot.RangeOffset,
             Season: ZodiacSeason[zodiacGot.Season] as keyof typeof ZodiacSeason,
             hasPlanet: zodiacGot.hasPlanet,
-            level: zodiacGot.level.toString(),
+            level: zodiacGot.level,
             locked: zodiacGot.locked,
             planet: zodiacGot.planet ? { ...zodiacGot.planet } : null,
-            quality: zodiacGot.quality.toString(),
+            quality: zodiacGot.quality,
             rarity: ZodiacRarity[zodiacGot.rarity] as keyof typeof ZodiacRarity,
-            rarityPlus: zodiacGot.rarityPlus.toString(),
-            score: zodiacGot.score.toString(),
+            rarityPlus: new BigNum(zodiacGot.rarityPlus),
+            score: zodiacGot.score,
             sign: ZodiacSign[zodiacGot.sign] as keyof typeof ZodiacSign,
             stats: zodiacGot.stats.map(stat => ({
               type: ZodiacStatType[stat.type] as keyof typeof ZodiacStatType,
-              value: stat.value.toString(),
+              value: stat.value,
             })),
           },
         })) ?? []);

@@ -1,6 +1,5 @@
 import { Action } from "../lib/action.ts";
 import {
-  BigNum,
   Color,
   GlobalVar,
   screenScope,

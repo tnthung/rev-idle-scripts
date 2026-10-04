@@ -50,7 +50,7 @@ export function afterLoad() {
     .setOnClick(demoClick)
     .setOnHover(function() { this.border = { thickness: 2, color: [100, 230, 180] }; })
     .setOnLeave(function() { this.border = { thickness: 0 }; });
-  // Defined in another module, whose BigNum import is reconstructed in background.
+  // Defined in another module; BigNum is provided globally in background.
   rev.ui("demoToggle", {
     text: "Disable async clicks", posX: 20, posY: 356, lenX: 310, lenY: 34,
     padding: { thickness: 8 }, color: [50, 65, 80, 240], states: { enabled: true },
