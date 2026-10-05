@@ -50,6 +50,7 @@ const DEFAULT_BUTTON_STYLE = {
 
 export const mineralMaintenanceEnabled = new GlobalVar<boolean>("mineralMaintenanceEnabled");
 export const refineNode22Bought        = new GlobalVar<boolean>("refineNode22Bought");
+export const refineNode32Bought        = new GlobalVar<boolean>("refineNode32Bought");
 export const refinePrestigeThreshold   = new GlobalVar<number>("refinePrestigeThreshold");
 export const prestigeSpawnTimeout      = new GlobalVar<number>("prestigeSpawnTimeout");
 
@@ -293,8 +294,14 @@ export async function onPoll() {
   if (mineralLoopTimer.stopped()) mineralLoopTimer.restart();
   if (commonMineralSpawnTimer.stopped()) commonMineralSpawnTimer.restart();
 
-  const refineNode22 = await States.refineNode(21);
+  const [
+    refineNode22,
+    refineNode32,
+  ] = await States.getAll(
+    States.refineNode.with(21),
+    States.refineNode.with(31));
   await refineNode22Bought.set(refineNode22.Bought);
+  await refineNode32Bought.set(refineNode32.Bought);
 
   await screenScope("Mineral Maintenance", async so => {
     await mergeCommonMinerals(so);
@@ -408,15 +415,16 @@ async function polishPrestige(so: ScreenScopeGuard) {
   await so("Polishing prestige minerals");
   await Action.unity.minerals.polish.prestige();
 
-  for (const upgradeType of WEAPON_UPGRADES_TO_BUY)
-    if ((await States.polishUpgrade(upgradeType)).CanBuy) {
-      if (!await mineralMaintenanceEnabled.get()) return;
+  if (!await refineNode32Bought.get())
+    for (const upgradeType of WEAPON_UPGRADES_TO_BUY)
+      if ((await States.polishUpgrade(upgradeType)).CanBuy) {
+        if (!await mineralMaintenanceEnabled.get()) return;
 
-      const weapon = PolishUpgradeType[upgradeType] as keyof typeof PolishUpgradeType;
-      await so(`Purchasing ${weapon} upgrade`);
-      await Action.unity.minerals.polish[weapon].purchase().catch(() => {});
-      await rev.sleep(100);
-    }
+        const weapon = PolishUpgradeType[upgradeType] as keyof typeof PolishUpgradeType;
+        await so(`Purchasing ${weapon} upgrade`);
+        await Action.unity.minerals.polish[weapon].purchase().catch(() => {});
+        await rev.sleep(100);
+      }
 
   await Action.unity.minerals.polish.close().catch(() => {});
   await rev.sleep(100);
