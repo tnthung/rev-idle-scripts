@@ -12,10 +12,6 @@ import {
 
 
 declare const rev: Readonly<RevWithUi<{
-  mineralElapsedClock: {
-    prestigeElapsed: number | null;
-    lastCommonSpawnPassed: number | null;
-  };
   mineralMaintenanceToggle: {
     hover: boolean;
     enabled: boolean;
@@ -32,16 +28,20 @@ declare const rev: Readonly<RevWithUi<{
   prestigeSpawnTimeout: { hover: boolean },
   prestigeSpawnTimeoutAdd01: { hover: boolean },
   prestigeSpawnTimeoutAdd1: { hover: boolean },
+
+  commonSpawnElapsed: undefined;
+  polishElapsed: undefined;
+  refineElapsed: undefined;
 }>>;
 
 export const MINERAL_SLOT_VIEW = "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_left[1]/ctn_minerals[1]/views[0]/scrollview_common[0]/viewport[0]";
 export const DEFAULT_REFINE_PRESTIGE_THRESHOLD = 100;
 export const DEFAULT_PRESTIGE_SPAWN_TIMEOUT = 1500;
+export const POLISH_PRESTIGE_TIMEOUT = 5000
 
 const DEFAULT_BUTTON_STYLE = {
   basedOn: MINERAL_SLOT_VIEW,
   posX: 0,
-  posY: -50,
   lenY: 25,
   corner: { radius: 5 },
   font: "Consolas",
@@ -63,51 +63,18 @@ export const BORDER_BLUE  = Color.fromRgb(BUTTON_BLUE).brightness(0.7).toRgb();
 export const HOVER_BLUE   = Color.fromRgb(BUTTON_BLUE).brightness(0.85).toRgb();
 
 
-const mineralLoopTimer        = new Timer(true);
-const commonMineralSpawnTimer = new Timer(true);
+export const commonMineralSpawnTimer = new Timer(true);
+export const polishPrestigeTimer     = new Timer(true);
+export const refinePrestigeTimer     = new Timer(true);
 
 export async function onLoad() {
   await Action.unity.minerals.ensureCanSkip();
-
-  rev.ui("mineralElapsedClock", {
-    basedOn: MINERAL_SLOT_VIEW,
-    posX: 0,
-    posY: -15,
-    font: "Consolas",
-    states: {
-      prestigeElapsed: null,
-      lastCommonSpawnPassed: null,
-    },
-  }).setOnStateUpdate(function () {
-    const prestigeElapsed = typeof this.states.prestigeElapsed === "number"
-      ? (this.states.prestigeElapsed / 1000).toFixed(2) : "-";
-
-    const lastCommonSpawnPassed = typeof this.states.lastCommonSpawnPassed === "number"
-      ? (this.states.lastCommonSpawnPassed / 1000).toFixed(2) : "-";
-
-    this.text = [
-      `Last Common Spawn Passed: ${lastCommonSpawnPassed}s`,
-      `Current Prestige Elapsed: ${prestigeElapsed}s`,
-    ].join("\n");
-  });
-
-  (async () => {
-    while (true) {
-      rev.ui("mineralElapsedClock", {
-        states: {
-          prestigeElapsed: mineralLoopTimer.getElapsed(),
-          lastCommonSpawnPassed: commonMineralSpawnTimer.getElapsed(),
-        },
-      });
-
-      await rev.sleep(100);
-    }
-  })();
+  polishPrestigeTimer.restart();
 
   monitorHover(rev.ui("mineralMaintenanceToggle", {
     ...DEFAULT_BUTTON_STYLE,
     posX: 0,
-    posY: -112,
+    posY: -75,
     states: {
       hover: false,
       enabled: await mineralMaintenanceEnabled.getOrSet(false),
@@ -124,7 +91,7 @@ export async function onLoad() {
 
   const DEFAULT_REFINE_PRESTIGE_LEVEL_STYLE = {
     ...DEFAULT_BUTTON_STYLE,
-    posY: -80,
+    posY: -45,
     lenX: 40,
     color: BUTTON_BLUE,
     alignX: "center",
@@ -196,7 +163,7 @@ export async function onLoad() {
 
   const DEFAULT_SPAWN_TIMEOUT_STYLE = {
     ...DEFAULT_BUTTON_STYLE,
-    posY: -50,
+    posY: -15,
     lenX: 40,
     color: BUTTON_BLUE,
     alignX: "center",
@@ -265,12 +232,41 @@ export async function onLoad() {
       this.update();
     })).update();
   }
+
+  rev.ui("commonSpawnElapsed", {
+    basedOn: "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/ctn_spawn[1]/ctn_spawn_actions[1]/btn_spawn[3]",
+    posX: -10,
+    posY: -10,
+    text: "0s",
+  });
+
+  rev.ui("polishElapsed", {
+    basedOn: "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/btn_polish[2]",
+    posX: -10,
+    posY: -10,
+    text: "0s",
+  });
+
+  rev.ui("refineElapsed", {
+    basedOn: "scene:-684/CANVAS[0]/safe_area[0]/views[1]/unity[3]/content[0]/panel[1]/views[0]/minerals[3]/content[0]/views[0]/main[0]/ctn_right[2]/btn_refine[3]",
+    posX: -10,
+    posY: -10,
+    text: "0s",
+  });
+
+  (async () => {
+    while (true) {
+      rev.ui("commonSpawnElapsed", { text: (commonMineralSpawnTimer.getElapsed() / 1000).toFixed(1) + "s" });
+      rev.ui("polishElapsed", { text: (polishPrestigeTimer.getElapsed() / 1000).toFixed(1) + "s" });
+      rev.ui("refineElapsed", { text: (refinePrestigeTimer.getElapsed() / 1000).toFixed(1) + "s" });
+      await rev.sleep(100);
+    }
+  })();
 }
 
 
 export async function onUnload() {
   rev.daemon("mineralElapsedClock", null);
-  rev.ui("mineralElapsedClock", null);
   rev.ui("mineralMaintenanceToggle", null);
   rev.ui("refinePrestigeSub10", null);
   rev.ui("refinePrestigeSub1", null);
@@ -282,17 +278,22 @@ export async function onUnload() {
   rev.ui("prestigeSpawnTimeout", null);
   rev.ui("prestigeSpawnTimeoutAdd01", null);
   rev.ui("prestigeSpawnTimeoutAdd1", null);
+  rev.ui("commonSpawnElapsed", null);
+  rev.ui("polishElapsed", null);
+  rev.ui("refineElapsed", null);
 }
 
 export async function onPoll() {
   if (!await mineralMaintenanceEnabled.get()) {
-    mineralLoopTimer.stop();
+    refinePrestigeTimer.stop();
     commonMineralSpawnTimer.stop();
+    polishPrestigeTimer.stop();
     return;
   }
 
-  if (mineralLoopTimer.stopped()) mineralLoopTimer.restart();
+  if (refinePrestigeTimer.stopped()) refinePrestigeTimer.restart();
   if (commonMineralSpawnTimer.stopped()) commonMineralSpawnTimer.restart();
+  if (polishPrestigeTimer.stopped()) polishPrestigeTimer.restart();
 
   const [
     refineNode22,
@@ -364,7 +365,7 @@ async function spawnCommonMinerals(so: ScreenScopeGuard) {
 
 
 async function mergeCommonMinerals(so: ScreenScopeGuard) {
-  while (true) {
+  while (polishPrestigeTimer.getElapsed() <= POLISH_PRESTIGE_TIMEOUT) {
     await adjustCommonMineralSpawnLevel(so);
     await spawnCommonMinerals(so);
 
@@ -395,7 +396,8 @@ async function refinePrestige(so: ScreenScopeGuard) {
   await Action.unity.minerals.refine.prestige();
   await Action.unity.minerals.refine.close().catch(() => {});
   await rev.sleep(100);
-  resetMineralTimers();
+  refinePrestigeTimer.restart();
+  polishPrestigeTimer.restart();
 }
 
 
@@ -408,8 +410,10 @@ const WEAPON_UPGRADES_TO_BUY = [
 ];
 
 async function polishPrestige(so: ScreenScopeGuard) {
-  if (commonMineralSpawnTimer.getElapsed() < await prestigeSpawnTimeout.getOrSet(DEFAULT_PRESTIGE_SPAWN_TIMEOUT)) return;
-  if ((await maxCommonMineralLevel()).gte(await refinePrestigeThreshold.getOrSet(DEFAULT_REFINE_PRESTIGE_THRESHOLD))) return;
+  if (polishPrestigeTimer.getElapsed() <= POLISH_PRESTIGE_TIMEOUT) {
+    if (commonMineralSpawnTimer.getElapsed() < await prestigeSpawnTimeout.getOrSet(DEFAULT_PRESTIGE_SPAWN_TIMEOUT)) return;
+    if ((await maxCommonMineralLevel()).gte(await refinePrestigeThreshold.getOrSet(DEFAULT_REFINE_PRESTIGE_THRESHOLD))) return;
+  }
 
   if (!await mineralMaintenanceEnabled.get()) return;
   await so("Polishing prestige minerals");
@@ -428,16 +432,11 @@ async function polishPrestige(so: ScreenScopeGuard) {
 
   await Action.unity.minerals.polish.close().catch(() => {});
   await rev.sleep(100);
+  polishPrestigeTimer.restart();
 }
 
 
 // -------------------- Helpers --------------------
-function resetMineralTimers() {
-  mineralLoopTimer.restart();
-  if (rev.ui.mineralElapsedClock)
-    rev.ui.mineralElapsedClock.states.prestigeElapsed = 0;
-}
-
 async function maxCommonMineralLevel() {
   const commonMinerals = await States.commonMinerals();
   return BigNum.max(...Object.values(commonMinerals).map(m => m.level), BigNum.ZERO);
